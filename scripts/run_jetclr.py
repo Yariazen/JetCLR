@@ -36,7 +36,7 @@ device = torch.device( "cuda" if torch.cuda.is_available() else "cpu" )
 print( "device: " + str( device ), flush=True, file=logfile )
 
 # set up results directory
-base_dir = "/ssl-jet-vol-v2/JetCLR_simCLR/models/"
+base_dir = "/ssl-jet-vol-v2/JetCLR/models/"
 expt_tag = args.expt
 expt_dir = base_dir + "experiments/" + expt_tag + "/"
 
