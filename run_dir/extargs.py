@@ -1,7 +1,7 @@
 #!/bin/env python3
-logfile = "/path/to/logfile.txt"
-tr_dat_path = "/path/to/data.npy"
-tr_lab_path = "/path/to/labels.npy"
+logfile = "/ssl-jet-vol-v2/JetCLR_VICReg/logs/Top_Tagging/zz-simCLR-trial-log.txt"
+tr_dat_path = "/ssl-jet-vol-v2/toptagging/train/processed/3_features/data_0.pt"
+tr_lab_path = "/ssl-jet-vol-v2/toptagging/train/processed/3_features/labels_0.pt"
 nconstit = 50
 model_dim = 1000
 output_dim = 1000
@@ -24,5 +24,5 @@ trsw = 1.0
 cf = True
 mask= False
 cmask = True
-expt = "experiment-name"
+expt = "zz-simCLR-trial"
 
