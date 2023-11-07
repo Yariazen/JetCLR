@@ -10,8 +10,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # import simple FCN network
-from modules.fcn_linear import fully_connected_linear_network
-from modules.fcn import fully_connected_network
+from .fcn_linear import fully_connected_linear_network
+from .fcn import fully_connected_network
 
 # import preprocessing functions
 from sklearn.preprocessing import StandardScaler, MaxAbsScaler, RobustScaler

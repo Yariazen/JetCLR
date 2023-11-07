@@ -16,10 +16,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # load custom modules required for jetCLR training
-from modules.jet_augs import rotate_jets, distort_jets, rescale_pts, crop_jets, translate_jets, collinear_fill_jets
-from modules.transformer import Transformer
-from modules.losses import contrastive_loss, align_loss, uniform_loss
-from modules.perf_eval import get_perf_stats, linear_classifier_test 
+from .modules.jet_augs import rotate_jets, distort_jets, rescale_pts, crop_jets, translate_jets, collinear_fill_jets
+from .modules.transformer import Transformer
+from .modules.losses import contrastive_loss, align_loss, uniform_loss
+from .modules.perf_eval import get_perf_stats, linear_classifier_test 
 
 # import args from extargs.py file
 # import extargs as args
@@ -60,7 +60,7 @@ torch.set_num_threads(2)
 
 def main(args):
     t0 = time.time()
-    args.logfile = f"/ssl-jet-vol-v2/JetCLR_VICReg/logs/Top_Tagging_simCLR/zz-simCLR-{args.label}-log.txt"
+    args.logfile = f"/ssl-jet-vol-v2/JetCLR/logs/zz-simCLR-{args.label}-log.txt"
     args.tr_dat_path = f"/ssl-jet-vol-v2/toptagging/train/processed/3_features/"
     args.tr_lab_path = args.tr_dat_path
     args.nconstit = 50
