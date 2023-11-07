@@ -111,6 +111,8 @@ def main(args):
     # reducing the training data
     # tr_dat = np.array( tr_dat )[0:100000]
     # tr_lab = np.array( tr_lab )[0:100000]
+    tr_dat = np.array( tr_dat )
+    tr_lab = np.array( tr_lab )
 
     # create two validation sets: 
     # one for training the linear classifier test (LCT)
