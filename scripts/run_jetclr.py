@@ -89,8 +89,8 @@ def main(args):
 
     # load data
     print_and_log( "loading data", flush=True, file=logfile )
-    data = load_data("/ssl-jet-vol-v2/toptagging", "train", 12)
-    labels = load_labels("/ssl-jet-vol-v2/toptagging", "train", 12)
+    data = load_data("/ssl-jet-vol-v2/toptagging", "train", args.num_train_files)
+    labels = load_labels("/ssl-jet-vol-v2/toptagging", "train", args.num_train_files)
     tr_dat_in = np.stack(data)
     tr_lab_in = np.stack(labels)
 
@@ -448,6 +448,14 @@ if __name__ == "__main__":
         action="store",
         default="/ssl-jet-vol-v2/toptagging/processed",
         help="Input directory with the dataset",
+    )
+    parser.add_argument(
+        "--num-train-files",
+        type=int,
+        action="store",
+        dest="num_train_files",
+        default=12,
+        help="number of files for training",
     )
     parser.add_argument(
         "--model-dim",
