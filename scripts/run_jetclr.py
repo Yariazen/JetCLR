@@ -80,11 +80,13 @@ def main(args):
     expt_tag = args.label
     expt_dir = base_dir + "experiments/" + expt_tag + "/"
 
-    # check if experiment already exists
-    if os.path.isdir(expt_dir):
-        sys.exit("ERROR: experiment already exists, don't want to overwrite it by mistake")
+    # check if experiment already exists and is not empty
+    if os.path.isdir(expt_dir) and os.listdir(expt_dir):
+        sys.exit("ERROR: experiment already exists and is not empty, don't want to overwrite it by mistake")
     else:
-        os.makedirs(expt_dir)
+        # This will create the directory if it does not exist or if it is empty
+        os.makedirs(expt_dir, exist_ok=True)
+
     print_and_log("experiment: "+str(args.label), file=logfile, flush=True)
 
     # load data
