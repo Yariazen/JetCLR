@@ -80,22 +80,13 @@ def main(args):
     expt_tag = args.label
     expt_dir = base_dir + "experiments/" + expt_tag + "/"
 
-<<<<<<< HEAD
-# check if experiment already exists and is not empty
-if os.path.isdir(expt_dir) and os.listdir(expt_dir):
-    sys.exit("ERROR: experiment already exists and is not empty, don't want to overwrite it by mistake")
-else:
-    # This will create the directory if it does not exist or if it is empty
-    os.makedirs(expt_dir, exist_ok=True)
-print("experiment: "+str(args.expt), file=logfile, flush=True)
-=======
-    # check if experiment already exists
-    if os.path.isdir(expt_dir):
-        sys.exit("ERROR: experiment already exists, don't want to overwrite it by mistake")
+    # check if experiment already exists and is not empty
+    if os.path.isdir(expt_dir) and os.listdir(expt_dir):
+        sys.exit("ERROR: experiment already exists and is not empty, don't want to overwrite it by mistake")
     else:
-        os.makedirs(expt_dir)
-    print_and_log("experiment: "+str(args.label), file=logfile, flush=True)
->>>>>>> 7873bccfdff0bf112347c38e26eb70a3ff0574a2
+        # This will create the directory if it does not exist or if it is empty
+        os.makedirs(expt_dir, exist_ok=True)
+    print("experiment: "+str(args.expt), file=logfile, flush=True)
 
     # load data
     print_and_log( "loading data", flush=True, file=logfile )
@@ -121,6 +112,8 @@ print("experiment: "+str(args.expt), file=logfile, flush=True)
     # reducing the training data
     # tr_dat = np.array( tr_dat )[0:100000]
     # tr_lab = np.array( tr_lab )[0:100000]
+    tr_dat = np.array( tr_dat )
+    tr_lab = np.array( tr_lab )
 
     # create two validation sets: 
     # one for training the linear classifier test (LCT)
