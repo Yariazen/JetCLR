@@ -64,6 +64,7 @@ def main(args):
     args.tr_dat_path = f"/ssl-jet-vol-v2/toptagging/train/processed/3_features/"
     args.tr_lab_path = args.tr_dat_path
     args.nconstit = 50
+    args.n_heads = 4
     args.opt = "adam"
     args.learning_rate = 0.00005 * args.batch_size / 128
 
@@ -86,7 +87,7 @@ def main(args):
     else:
         # This will create the directory if it does not exist or if it is empty
         os.makedirs(expt_dir, exist_ok=True)
-    print("experiment: "+str(args.expt), file=logfile, flush=True)
+    print("experiment: "+str(args.label), file=logfile, flush=True)
 
     # load data
     print_and_log( "loading data", flush=True, file=logfile )
@@ -264,8 +265,10 @@ def main(args):
             time5 = time.time()
             x_i = rescale_pts( x_i )
             x_j = rescale_pts( x_j )
-            x_i = torch.Tensor( x_i ).transpose(1,2).to( device )
-            x_j = torch.Tensor( x_j ).transpose(1,2).to( device )
+#             x_i = torch.Tensor( x_i ).transpose(1,2).to( device )
+#             x_j = torch.Tensor( x_j ).transpose(1,2).to( device )
+            x_i = torch.Tensor( x_i ).to( device )
+            x_j = torch.Tensor( x_j ).to( device )
             time6 = time.time()
             z_i = net( x_i, use_mask=args.mask, use_continuous_mask=args.cmask )
             z_j = net( x_j, use_mask=args.mask, use_continuous_mask=args.cmask )
