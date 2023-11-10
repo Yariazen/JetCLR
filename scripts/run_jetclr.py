@@ -30,12 +30,12 @@ def print_and_log(message, file=None, flush=True):
 
 # load the datafiles
 def load_data(dataset_path, flag, n_files=-1):
-    data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features/data/*")
+    data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features_raw/data/*")
 #     print_and_log(data_files)
 
     data = []
     for i, file in enumerate(data_files):
-        data += torch.load(f"{dataset_path}/{flag}/processed/3_features/data/data_{i}.pt")
+        data += torch.load(f"{dataset_path}/{flag}/processed/3_features_raw/data/data_{i}.pt")
         print_and_log(f"--- loaded file {i} from `{flag}` directory")
         if n_files != -1 and i == n_files - 1:
             break
@@ -44,11 +44,11 @@ def load_data(dataset_path, flag, n_files=-1):
 
 
 def load_labels(dataset_path, flag, n_files=-1):
-    data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features/labels/*")
+    data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features_raw/labels/*")
 
     data = []
     for i, file in enumerate(data_files):
-        data += torch.load(f"{dataset_path}/{flag}/processed/3_features/labels/labels_{i}.pt")
+        data += torch.load(f"{dataset_path}/{flag}/processed/3_features_raw/labels/labels_{i}.pt")
         print_and_log(f"--- loaded label file {i} from `{flag}` directory")
         if n_files != -1 and i == n_files - 1:
             break
