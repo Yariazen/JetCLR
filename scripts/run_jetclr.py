@@ -44,11 +44,11 @@ def load_data(dataset_path, flag, n_files=-1):
 
 
 def load_labels(dataset_path, flag, n_files=-1):
-    data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features_raw/labels/*")
+    data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features/labels/*")
 
     data = []
     for i, file in enumerate(data_files):
-        data += torch.load(f"{dataset_path}/{flag}/processed/3_features_raw/labels/labels_{i}.pt")
+        data += torch.load(f"{dataset_path}/{flag}/processed/3_features/labels/labels_{i}.pt")
         print_and_log(f"--- loaded label file {i} from `{flag}` directory")
         if n_files != -1 and i == n_files - 1:
             break
@@ -344,8 +344,10 @@ def main(args):
                 net.eval()
                 #vl_reps_1 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
                 #vl_reps_2 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
-                vl_reps_1 = net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
-                vl_reps_2 = net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
+#                 vl_reps_1 = net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
+#                 vl_reps_2 = net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
+                vl_reps_1 = net.forward_batchwise( torch.Tensor( vl_dat_1 ), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
+                vl_reps_2 = net.forward_batchwise( torch.Tensor( vl_dat_2 ), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
                 net.train()
             # running the LCT on each rep layer
             auc_list = []
