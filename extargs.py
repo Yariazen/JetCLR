@@ -1,12 +1,12 @@
 #!/bin/env python3
-logfile = "/ssl-jet-vol-v2/JetCLR/logs/zz-simCLR-8-log.txt"
+logfile = "/ssl-jet-vol-v2/JetCLR/logs/zz-simCLR-1000-8-log.txt"
 tr_dat_path = "/ssl-jet-vol-v2/toptagging/train/processed/3_features_raw/data/data_0.pt"
 tr_lab_path = "/ssl-jet-vol-v2/toptagging/train/processed/3_features_raw/labels/labels_0.pt"
 nconstit = 50
-model_dim = 8
+model_dim = 1000
 output_dim = 8
 n_heads = 4
-dim_feedforward = 8
+dim_feedforward = 1000
 n_layers = 4
 n_head_layers = 2
 opt = "adam"
@@ -24,5 +24,5 @@ trsw = 1.0
 cf = True
 mask= False
 cmask = True
-expt = "zz-simCLR-8"
+expt = "zz-simCLR-1000-8"
 
