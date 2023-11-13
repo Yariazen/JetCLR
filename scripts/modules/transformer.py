@@ -91,32 +91,28 @@ class Transformer( nn.Module ):
                 reps shape=(batchsize, number_of_reps, output_dim)  for mult_reps=True
         '''
         relu = nn.ReLU()
-            # return representations from multiple layers for evaluation
         if mult_reps == True:   
             if self.n_head_layers > 0:
                 reps = torch.empty(x.shape[0], self.n_head_layers+1, self.output_dim)
-                reps[:, 0] = x
+                # Transform x to output_dim size before assignment
+                x_transformed = self.head_layers[0](relu(x)) if self.n_head_layers > 0 else x
+                reps[:, 0] = x_transformed
                 for i, layer in enumerate(self.head_layers):
-                    # only apply layer norm on head if chosen
                     if self.head_norm: x = self.norm_layers[i](x)       
                     x = relu(x)
                     x = layer(x)
                     reps[:, i+1] = x
-                # shape (n_head_layers, output_dim)
                 return reps  
-            # no head exists -> just return x in a list with dimension 1
             else:  
                 reps = x[:, None, :]
-                # shape (batchsize, 1, model_dim)
                 return reps  
-        # return only last representation for contrastive loss
         else:  
-            for i, layer in enumerate(self.head_layers):  # will do nothing if n_head_layers is 0
+            for i, layer in enumerate(self.head_layers):
                 if self.head_norm: x = self.norm_layers[i](x)
                 x = relu(x)
                 x = layer(x)
-            # shape either (model_dim) if no head, or (output_dim) if head exists
-            return x  
+            return x
+
 
 
     def forward_batchwise( self, x, batch_size, use_mask=False, use_continuous_mask=False):
