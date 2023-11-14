@@ -1,19 +1,19 @@
 #!/bin/env python3
-logfile = "/ssl-jet-vol-v2/JetCLR/logs/zz-simCLR-1000-32-log.txt"
+logfile = "/ssl-jet-vol-v2/JetCLR/logs/zz-simCLR-test-log.txt"
 tr_dat_path = "/ssl-jet-vol-v2/toptagging/train/processed/3_features_raw/data/data_0.pt"
 tr_lab_path = "/ssl-jet-vol-v2/toptagging/train/processed/3_features_raw/labels/labels_0.pt"
 nconstit = 50
-model_dim = 1000
-output_dim = 32
+model_dim = 8
+output_dim = 8
 n_heads = 4
-dim_feedforward = 1000
+dim_feedforward = 8
 n_layers = 4
 n_head_layers = 2
 opt = "adam"
 sbratio = 1.0
 n_epochs = 500
 learning_rate = 0.00005
-batch_size = 256
+batch_size = 128
 temperature = 0.10
 rot = True
 ptd = True
@@ -24,5 +24,6 @@ trsw = 1.0
 cf = True
 mask= False
 cmask = True
-expt = "zz-simCLR-1000-32"
+expt = "zz-simCLR-test"
+num_files = 12
 
