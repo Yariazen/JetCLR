@@ -1,5 +1,5 @@
 #!/bin/env python3
-logfile = "/ssl-jet-vol-v2/JetCLR/logs/zz-simCLR-test-log.txt"
+logfile = "/ssl-jet-vol-v2/JetCLR/logs/zz-simCLR-full-log.txt"
 tr_dat_path = "/ssl-jet-vol-v2/toptagging/train/processed/3_features_raw/data/data_0.pt"
 tr_lab_path = "/ssl-jet-vol-v2/toptagging/train/processed/3_features_raw/labels/labels_0.pt"
 nconstit = 50
@@ -24,6 +24,6 @@ trsw = 1.0
 cf = True
 mask= False
 cmask = True
-expt = "zz-simCLR-test"
+expt = "zz-simCLR-full"
 num_files = 12
 
