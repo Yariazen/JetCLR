@@ -77,8 +77,8 @@ def load_labels(dataset_path, flag, n_files=-1):
     return data
 print( "loading data", flush=True, file=logfile )
 # print(args.tr_dat_path )
-data = load_data("/ssl-jet-vol-v2/toptagging", "train", 2)
-labels = load_labels("/ssl-jet-vol-v2/toptagging", "train", 2)
+data = load_data("/ssl-jet-vol-v2/toptagging", "train", args.num_files)
+labels = load_labels("/ssl-jet-vol-v2/toptagging", "train", args.num_files)
 tr_dat_in = np.stack(data)
 tr_lab_in = np.stack(labels)
 
