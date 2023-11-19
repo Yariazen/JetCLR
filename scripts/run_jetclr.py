@@ -7,8 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 import time
-import argparse
 import glob
+import argparse
 
 # load torch modules
 import torch
@@ -16,27 +16,26 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # load custom modules required for jetCLR training
-from modules.jet_augs import rotate_jets, distort_jets, rescale_pts, crop_jets, translate_jets, collinear_fill_jets
-from modules.transformer import Transformer
-from modules.losses import contrastive_loss, align_loss, uniform_loss
-from modules.perf_eval import get_perf_stats, linear_classifier_test 
+from .modules.jet_augs import rotate_jets, distort_jets, rescale_pts, crop_jets, translate_jets, collinear_fill_jets
+from .modules.transformer import Transformer
+from .modules.losses import contrastive_loss, align_loss, uniform_loss
+from .modules.perf_eval import get_perf_stats, linear_classifier_test 
 
 # import args from extargs.py file
 # import extargs as args
-def print_and_log(message, file=None, flush=True):
-    print(message)
-    if file is not None:
-        print(message, file=file, flush=flush)
 
-# load the datafiles
+# set the number of threads that pytorch will use
+torch.set_num_threads(2)
+
+   # load data
 def load_data(dataset_path, flag, n_files=-1):
-    data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features/data/*")
+    data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features_raw/data/*")
 #     print_and_log(data_files)
 
     data = []
     for i, file in enumerate(data_files):
-        data += torch.load(f"{dataset_path}/{flag}/processed/3_features/data/data_{i}.pt")
-        print_and_log(f"--- loaded file {i} from `{flag}` directory")
+        data += torch.load(f"{dataset_path}/{flag}/processed/3_features_raw/data/data_{i}.pt")
+        print(f"--- loaded file {i} from `{flag}` directory")
         if n_files != -1 and i == n_files - 1:
             break
 
@@ -49,58 +48,63 @@ def load_labels(dataset_path, flag, n_files=-1):
     data = []
     for i, file in enumerate(data_files):
         data += torch.load(f"{dataset_path}/{flag}/processed/3_features/labels/labels_{i}.pt")
-        print_and_log(f"--- loaded label file {i} from `{flag}` directory")
+        print(f"--- loaded label file {i} from `{flag}` directory")
         if n_files != -1 and i == n_files - 1:
             break
 
     return data
 
-# set the number of threads that pytorch will use
-torch.set_num_threads(2)
-
 def main(args):
     t0 = time.time()
-    args.logfile = f"/ssl-jet-vol-v2/JetCLR_VICReg/logs/Top_Tagging_simCLR/zz-simCLR-{args.label}-log.txt"
-    args.tr_dat_path = f"/ssl-jet-vol-v2/toptagging/train/processed/3_features/"
-    args.tr_lab_path = args.tr_dat_path
+    args.logfile = f"/ssl-jet-vol-v2/JetCLR/logs/zz-simCLR-{args.label}-log.txt"
     args.nconstit = 50
+    args.n_heads = 4
     args.opt = "adam"
     args.learning_rate = 0.00005 * args.batch_size / 128
 
     # initialise logfile
     logfile = open( args.logfile, "a" )
-    print_and_log( "logfile initialised", file=logfile, flush=True )
+    print( "logfile initialised", file=logfile, flush=True )
 
     # set gpu device
     device = torch.device( "cuda" if torch.cuda.is_available() else "cpu" )
-    print_and_log( "device: " + str( device ), flush=True, file=logfile )
+    print( "device: " + str( device ), flush=True, file=logfile )
 
     # set up results directory
     base_dir = "/ssl-jet-vol-v2/JetCLR/models/"
     expt_tag = args.label
     expt_dir = base_dir + "experiments/" + expt_tag + "/"
 
+<<<<<<< HEAD
     # check if experiment already exists and is not empty
+=======
+    # check if experiment already exists
+>>>>>>> 29c11ecde22d55419634279633e219e8eb382f06
     if os.path.isdir(expt_dir) and os.listdir(expt_dir):
         sys.exit("ERROR: experiment already exists and is not empty, don't want to overwrite it by mistake")
     else:
         # This will create the directory if it does not exist or if it is empty
         os.makedirs(expt_dir, exist_ok=True)
+<<<<<<< HEAD
 
     print_and_log("experiment: "+str(args.label), file=logfile, flush=True)
+=======
+    print("experiment: "+str(args.label), file=logfile, flush=True)
+>>>>>>> 29c11ecde22d55419634279633e219e8eb382f06
 
-    # load data
-    print_and_log( "loading data", flush=True, file=logfile )
-    data = load_data("/ssl-jet-vol-v2/toptagging", "train", args.num_train_files)
-    labels = load_labels("/ssl-jet-vol-v2/toptagging", "train", args.num_train_files)
+ 
+    print( "loading data", flush=True, file=logfile )
+    data = load_data("/ssl-jet-vol-v2/toptagging", "train", args.num_files)
+    labels = load_labels("/ssl-jet-vol-v2/toptagging", "train", args.num_files)
     tr_dat_in = np.stack(data)
     tr_lab_in = np.stack(labels)
 
     # input dim to the transformer -> (pt,eta,phi)
-    input_dim = tr_dat_in.shape[2]
+    input_dim = tr_dat_in.shape[1]
+    print(input_dim)
 
     # creating the training dataset
-    print_and_log( "shuffling data and doing the S/B split", flush=True, file=logfile )
+    print( "shuffling data and doing the S/B split", flush=True, file=logfile )
     tr_bkg_dat = tr_dat_in[ tr_lab_in==0 ].copy()
     tr_sig_dat = tr_dat_in[ tr_lab_in==1 ].copy()
     nbkg_tr = int( tr_bkg_dat.shape[0] )
@@ -111,8 +115,11 @@ def main(args):
     random.shuffle( ldz_tr )
     tr_dat, tr_lab = zip( *ldz_tr )
     # reducing the training data
+<<<<<<< HEAD
     # tr_dat = np.array( tr_dat )[0:100000]
     # tr_lab = np.array( tr_lab )[0:100000]
+=======
+>>>>>>> 29c11ecde22d55419634279633e219e8eb382f06
     tr_dat = np.array( tr_dat )
     tr_lab = np.array( tr_lab )
 
@@ -141,13 +148,13 @@ def main(args):
     vl_dat_1 = crop_jets( vl_dat_1, args.nconstit )
     vl_dat_2 = crop_jets( vl_dat_2, args.nconstit )
 
-    # print_and_log data dimensions
-    print_and_log( "training data shape: " + str( tr_dat.shape ), flush=True, file=logfile )
-    print_and_log( "validation-1 data shape: " + str( vl_dat_1.shape ), flush=True, file=logfile )
-    print_and_log( "validation-2 data shape: " + str( vl_dat_2.shape ), flush=True, file=logfile )
-    print_and_log( "training labels shape: " + str( tr_lab.shape ), flush=True, file=logfile )
-    print_and_log( "validation-1 labels shape: " + str( vl_lab_1.shape ), flush=True, file=logfile )
-    print_and_log( "validation-2 labels shape: " + str( vl_lab_2.shape ), flush=True, file=logfile )
+    # print data dimensions
+    print( "training data shape: " + str( tr_dat.shape ), flush=True, file=logfile )
+    print( "validation-1 data shape: " + str( vl_dat_1.shape ), flush=True, file=logfile )
+    print( "validation-2 data shape: " + str( vl_dat_2.shape ), flush=True, file=logfile )
+    print( "training labels shape: " + str( tr_lab.shape ), flush=True, file=logfile )
+    print( "validation-1 labels shape: " + str( vl_lab_1.shape ), flush=True, file=logfile )
+    print( "validation-2 labels shape: " + str( vl_lab_2.shape ), flush=True, file=logfile )
 
     t1 = time.time()
 
@@ -155,7 +162,7 @@ def main(args):
     vl_dat_1 = rescale_pts( vl_dat_1 )
     vl_dat_2 = rescale_pts( vl_dat_2 )
 
-    print_and_log( "time taken to load and preprocess data: "+str( np.round( t1-t0, 2 ) ) + " seconds", flush=True, file=logfile )
+    print( "time taken to load and preprocess data: "+str( np.round( t1-t0, 2 ) ) + " seconds", flush=True, file=logfile )
 
     # set-up parameters for the LCT
     linear_input_size = args.output_dim
@@ -163,29 +170,29 @@ def main(args):
     linear_learning_rate = 0.001
     linear_batch_size = 128
 
-    print_and_log( "--- contrastive learning transformer network architecture ---", flush=True, file=logfile )
-    print_and_log( "model dimension: " + str( args.model_dim ) , flush=True, file=logfile )
-    print_and_log( "number of heads: " + str( args.n_heads ) , flush=True, file=logfile )
-    print_and_log( "dimension of feedforward network: " + str( args.dim_feedforward ) , flush=True, file=logfile )
-    print_and_log( "number of layers: " + str( args.n_layers ) , flush=True, file=logfile )
-    print_and_log( "number of head layers: " + str( args.n_head_layers ) , flush=True, file=logfile )
-    print_and_log( "optimiser: " + str( args.opt ) , flush=True, file=logfile )
-    print_and_log( "mask: " + str( args.mask ) , flush=True, file=logfile )
-    print_and_log( "continuous mask: " + str( args.cmask ) , flush=True, file=logfile )
-    print_and_log( "--- hyper-parameters ---", flush=True, file=logfile )
-    print_and_log( "learning rate: " + str( args.learning_rate ) , flush=True, file=logfile )
-    print_and_log( "batch size: " + str( args.batch_size ) , flush=True, file=logfile )
-    print_and_log( "temperature: " + str( args.temperature ) , flush=True, file=logfile )
-    print_and_log( "--- symmetries/augmentations ---", flush=True, file=logfile )
-    print_and_log( "rotations: " + str( args.rot ) , flush=True, file=logfile )
-    print_and_log( "low pT smearing: " + str( args.ptd ) , flush=True, file=logfile )
-    print_and_log( "pT smearing clip parameter: " + str( args.ptcm ) , flush=True, file=logfile )
-    print_and_log( "translations: " + str( args.trs ) , flush=True, file=logfile )
-    print_and_log( "translations width: " + str( args.trsw ) , flush=True, file=logfile )
-    print_and_log( "---", flush=True, file=logfile )
+    print( "--- contrastive learning transformer network architecture ---", flush=True, file=logfile )
+    print( "model dimension: " + str( args.model_dim ) , flush=True, file=logfile )
+    print( "number of heads: " + str( args.n_heads ) , flush=True, file=logfile )
+    print( "dimension of feedforward network: " + str( args.dim_feedforward ) , flush=True, file=logfile )
+    print( "number of layers: " + str( args.n_layers ) , flush=True, file=logfile )
+    print( "number of head layers: " + str( args.n_head_layers ) , flush=True, file=logfile )
+    print( "optimiser: " + str( args.opt ) , flush=True, file=logfile )
+    print( "mask: " + str( args.mask ) , flush=True, file=logfile )
+    print( "continuous mask: " + str( args.cmask ) , flush=True, file=logfile )
+    print( "--- hyper-parameters ---", flush=True, file=logfile )
+    print( "learning rate: " + str( args.learning_rate ) , flush=True, file=logfile )
+    print( "batch size: " + str( args.batch_size ) , flush=True, file=logfile )
+    print( "temperature: " + str( args.temperature ) , flush=True, file=logfile )
+    print( "--- symmetries/augmentations ---", flush=True, file=logfile )
+    print( "rotations: " + str( args.rot ) , flush=True, file=logfile )
+    print( "low pT smearing: " + str( args.ptd ) , flush=True, file=logfile )
+    print( "pT smearing clip parameter: " + str( args.ptcm ) , flush=True, file=logfile )
+    print( "translations: " + str( args.trs ) , flush=True, file=logfile )
+    print( "translations width: " + str( args.trsw ) , flush=True, file=logfile )
+    print( "---", flush=True, file=logfile )
 
     # initialise the network
-    print_and_log( "initialising the network", flush=True, file=logfile )
+    print( "initialising the network", flush=True, file=logfile )
     net = Transformer( input_dim, args.model_dim, args.output_dim, args.n_heads, args.dim_feedforward, args.n_layers, args.learning_rate, args.n_head_layers, dropout=0.1, opt=args.opt )
 
     # send network to device
@@ -201,8 +208,8 @@ def main(args):
 
     # THE TRAINING LOOP
 
-    print_and_log( "starting training loop, running for " + str( args.n_epochs ) + " epochs", flush=True, file=logfile )
-    print_and_log( "---", flush=True, file=logfile )
+    print( "starting training loop, running for " + str( args.n_epochs ) + " epochs", flush=True, file=logfile )
+    print( "---", flush=True, file=logfile )
 
     # initialise lists for storing training stats
     auc_epochs = []
@@ -215,7 +222,7 @@ def main(args):
     if args.opt == "sgdca":
         # number of iterations per epoch
         iters = int( tr_dat.shape[0]/args.batch_size )
-        print_and_log( "number of iterations per epoch: " + str(iters), flush=True, file=logfile )
+        print( "number of iterations per epoch: " + str(iters), flush=True, file=logfile )
 
     # the loop
     for epoch in range( args.n_epochs ):
@@ -247,6 +254,7 @@ def main(args):
             net.optimizer.zero_grad()
             x_i = tr_dat[indices,:,:]
             time1 = time.time()
+#             print(x_i.shape)
             x_i = rotate_jets( x_i )
             x_j = x_i.copy()
             if args.rot:
@@ -268,6 +276,7 @@ def main(args):
             x_i = torch.Tensor( x_i ).transpose(1,2).to( device )
             x_j = torch.Tensor( x_j ).transpose(1,2).to( device )
             time6 = time.time()
+#             print(x_i.shape)
             z_i = net( x_i, use_mask=args.mask, use_continuous_mask=args.cmask )
             z_j = net( x_j, use_mask=args.mask, use_continuous_mask=args.cmask )
             time7 = time.time()
@@ -308,10 +317,10 @@ def main(args):
 
         te1 = time.time()
 
-        print_and_log( "epoch: " + str( epoch ) + ", loss: " + str( round(losses[-1], 5) ), flush=True, file=logfile )
+        print( "epoch: " + str( epoch ) + ", loss: " + str( round(losses[-1], 5) ), flush=True, file=logfile )
         if args.opt == "sgdca" or args.opt == "sgdslr":
-            print_and_log( "lr: " + str( scheduler._last_lr ), flush=True, file=logfile )
-        print_and_log( f"total time taken: {round( te1-te0, 1 )}s, augmentation: {round(td1+td2+td3+td4+td5,1)}s, forward {round(td6, 1)}s, backward {round(td8, 1)}s, other {round(te1-te0-(td1+td2+td3+td4+td6+td7+td8), 2)}s", flush=True, file=logfile )
+            print( "lr: " + str( scheduler._last_lr ), flush=True, file=logfile )
+        print( f"total time taken: {round( te1-te0, 1 )}s, augmentation: {round(td1+td2+td3+td4+td5,1)}s, forward {round(td6, 1)}s, backward {round(td8, 1)}s, other {round(te1-te0-(td1+td2+td3+td4+td6+td7+td8), 2)}s", flush=True, file=logfile )
 
         # check memory stats on the gpu
         if epoch % 10 == 0:
@@ -319,21 +328,21 @@ def main(args):
             r = torch.cuda.memory_reserved(0)
             a = torch.cuda.memory_allocated(0)
             f = r - a  # free inside reserved
-            print_and_log( f"CUDA memory: total {t}, reserved {r}, allocated {a}, free {f}", flush=True, file=logfile )
+            print( f"CUDA memory: total {t}, reserved {r}, allocated {a}", flush=True, file=logfile )
 
         # summarise alignment and uniformity stats
         if epoch%10==0:
             loss_align_epochs.append( np.mean( np.array( loss_align_e ) ) )
             loss_uniform_epochs.append( np.mean( np.array( loss_uniform_e ) ) )
-            print_and_log( "alignment: " + str( loss_align_epochs[-1] ) + ", uniformity: " + str( loss_uniform_epochs[-1] ), flush=True, file=logfile )
+            print( "alignment: " + str( loss_align_epochs[-1] ) + ", uniformity: " + str( loss_uniform_epochs[-1] ), flush=True, file=logfile )
 
         # check number of threads being used
         if epoch%10==0:
-            print_and_log( "num threads in use: " + str( torch.get_num_threads() ), flush=True, file=logfile )
+            print( "num threads in use: " + str( torch.get_num_threads() ), flush=True, file=logfile )
 
         # run a short LCT
         if epoch%10==0:
-            print_and_log( "--- LCT ----" , flush=True, file=logfile )
+            print( "--- LCT ----" , flush=True, file=logfile )
             if args.trs:
                 vl_dat_1 = translate_jets( vl_dat_1, width=args.trsw )
                 vl_dat_2 = translate_jets( vl_dat_2, width=args.trsw )
@@ -358,24 +367,24 @@ def main(args):
                     auc_list.append( auc )
                     imtafe_list.append( imtafe )
                     vl1_test = time.time()
-                    print_and_log( "LCT layer " + str(i) + "- time taken: " + str( np.round( vl1_test - vl0_test, 2 ) ), flush=True, file=logfile )
-                    print_and_log( "auc: " + str( np.round( auc, 4 ) ) + ", imtafe: " + str( round( imtafe, 1 ) ), flush=True, file=logfile )
+                    print( "LCT layer " + str(i) + "- time taken: " + str( np.round( vl1_test - vl0_test, 2 ) ), flush=True, file=logfile )
+                    print( "auc: " + str( np.round( auc, 4 ) ) + ", imtafe: " + str( round( imtafe, 1 ) ), flush=True, file=logfile )
                     np.save( expt_dir + "lct_ep" +str(epoch) + "_r" +str(i) + "_losses.npy", losses_vl )
             auc_epochs.append( auc_list )
             imtafe_epochs.append( imtafe_list )
-            print_and_log( "---- --- ----" , flush=True, file=logfile )
+            print( "---- --- ----" , flush=True, file=logfile )
 
             # saving the model
             if epoch % 10 == 0:
-                print_and_log("saving out jetCLR model", flush=True, file=logfile)
+                print("saving out jetCLR model", flush=True, file=logfile)
                 tms0 = time.time()
                 torch.save(net.state_dict(), expt_dir + "model_ep" + str(epoch) + ".pt")
                 tms1 = time.time()
-                print_and_log( f"time taken to save model: {round( tms1-tms0, 1 )}s", flush=True, file=logfile )
+                print( f"time taken to save model: {round( tms1-tms0, 1 )}s", flush=True, file=logfile )
             
             # saving out training stats
             if epoch % 10 == 0:
-                print_and_log( "saving out data/results", flush=True, file=logfile )
+                print( "saving out data/results", flush=True, file=logfile )
                 tds0 = time.time()
                 np.save( expt_dir + "clr_losses.npy", losses )
                 np.save( expt_dir + "auc_epochs.npy", np.array( auc_epochs ) )
@@ -383,14 +392,14 @@ def main(args):
                 np.save( expt_dir + "align_loss_train.npy", loss_align_epochs )
                 np.save( expt_dir + "uniform_loss_train.npy", loss_uniform_epochs )
                 tds1 = time.time()
-                print_and_log( f"time taken to save data: {round( tds1-tds0, 1 )}s", flush=True, file=logfile )
+                print( f"time taken to save data: {round( tds1-tds0, 1 )}s", flush=True, file=logfile )
 
     t2 = time.time()
 
-    print_and_log( "JETCLR TRAINING DONE, time taken: " + str( np.round( t2-t1, 2 ) ), flush=True, file=logfile )
+    print( "JETCLR TRAINING DONE, time taken: " + str( np.round( t2-t1, 2 ) ), flush=True, file=logfile )
 
     # save out results
-    print_and_log( "saving out data/results", flush=True, file=logfile )
+    print( "saving out data/results", flush=True, file=logfile )
     np.save( expt_dir+"clr_losses.npy", losses )
     np.save( expt_dir+"auc_epochs.npy", np.array( auc_epochs ) )
     np.save( expt_dir+"imtafe_epochs.npy", np.array( imtafe_epochs ) )
@@ -398,10 +407,10 @@ def main(args):
     np.save( expt_dir+"uniform_loss_train.npy", loss_uniform_epochs )
 
     # save out final trained model
-    print_and_log( "saving out final jetCLR model", flush=True, file=logfile )
+    print( "saving out final jetCLR model", flush=True, file=logfile )
     torch.save(net.state_dict(), expt_dir+"final_model.pt")
 
-    print_and_log( "starting the final LCT run", flush=True, file=logfile )
+    print( "starting the final LCT run", flush=True, file=logfile )
 
     # evaluate the network on the testing data, applying some augmentations first if it's required
     if args.trs:
@@ -418,28 +427,28 @@ def main(args):
     # final LCT for each rep layer
     for i in range(vl_reps_1.shape[1]):
         t3 = time.time()
-        out_dat_f, out_lbs_f, losses_f = linear_classifier_test( linear_input_size, linear_batch_size, linear_n_epochs, linear_learning_rate, vl_reps_1[:,i,:], vl_lab_1, vl_reps_2[:,i,:], vl_lab_2 )
+        out_dat_f, out_lbs_f, losses_f = linear_classifier_test( linear_input_size, linear_batch_size, linear_n_epochs, "adam", linear_learning_rate, vl_reps_1[:,i,:], vl_lab_1, vl_reps_2[:,i,:], vl_lab_2 )
         auc, imtafe = get_perf_stats( out_lbs_f, out_dat_f )
         ep=0
         step_size = 25
         for lss in losses_f[::step_size]:
-            print_and_log( f"(rep layer {i}) epoch: " + str( ep ) + ", loss: " + str( lss ), flush=True, file=logfile )
+            print( f"(rep layer {i}) epoch: " + str( ep ) + ", loss: " + str( lss ), flush=True, file=logfile )
             ep+=step_size
-        print_and_log( f"(rep layer {i}) auc: "+str( round(auc, 4) ), flush=True, file=logfile )
-        print_and_log( f"(rep layer {i}) imtafe: "+str( round(imtafe, 1) ), flush=True, file=logfile )
+        print( f"(rep layer {i}) auc: "+str( round(auc, 4) ), flush=True, file=logfile )
+        print( f"(rep layer {i}) imtafe: "+str( round(imtafe, 1) ), flush=True, file=logfile )
         t4 = time.time()
         np.save( expt_dir+f"linear_losses_{i}.npy", losses_f )
         np.save( expt_dir+f"test_linear_cl_{i}.npy", out_dat_f )
 
-    print_and_log( "final LCT  done and output saved, time taken: " + str( np.round( t4-t3, 2 ) ), flush=True, file=logfile )
-    print_and_log("............................", flush=True, file=logfile)
+    print( "final LCT  done and output saved, time taken: " + str( np.round( t4-t3, 2 ) ), flush=True, file=logfile )
+    print("............................", flush=True, file=logfile)
 
     t5 = time.time()
 
-    print_and_log( "----------------------------", flush=True, file=logfile )
-    print_and_log( "----------------------------", flush=True, file=logfile )
-    print_and_log( "----------------------------", flush=True, file=logfile )
-    print_and_log( "ALL DONE, total time taken: " + str( np.round( t5-t0, 2 ) ), flush=True, file=logfile )
+    print( "----------------------------", flush=True, file=logfile )
+    print( "----------------------------", flush=True, file=logfile )
+    print( "----------------------------", flush=True, file=logfile )
+    print( "ALL DONE, total time taken: " + str( np.round( t5-t0, 2 ) ), flush=True, file=logfile )
 
 
 if __name__ == "__main__":
@@ -454,10 +463,10 @@ if __name__ == "__main__":
         help="Input directory with the dataset",
     )
     parser.add_argument(
-        "--num-train-files",
+        "--num-files",
         type=int,
         action="store",
-        dest="num_train_files",
+        dest="num_files",
         default=12,
         help="number of files for training",
     )
@@ -490,7 +499,7 @@ if __name__ == "__main__":
         type=int,
         action="store",
         dest="n_head_layers",
-        default=4,
+        default=2,
         help="number of head layers of the transformer-encoder",
     )
     parser.add_argument(
