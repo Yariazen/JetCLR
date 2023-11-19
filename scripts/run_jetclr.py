@@ -413,7 +413,7 @@ def main(args):
     # final LCT for each rep layer
     for i in range(vl_reps_1.shape[1]):
         t3 = time.time()
-        out_dat_f, out_lbs_f, losses_f = linear_classifier_test( linear_input_size, linear_batch_size, linear_n_epochs, linear_learning_rate, vl_reps_1[:,i,:], vl_lab_1, vl_reps_2[:,i,:], vl_lab_2 )
+        out_dat_f, out_lbs_f, losses_f = linear_classifier_test( linear_input_size, linear_batch_size, linear_n_epochs, "adam", linear_learning_rate, vl_reps_1[:,i,:], vl_lab_1, vl_reps_2[:,i,:], vl_lab_2 )
         auc, imtafe = get_perf_stats( out_lbs_f, out_dat_f )
         ep=0
         step_size = 25
