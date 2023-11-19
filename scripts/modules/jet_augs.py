@@ -27,6 +27,13 @@ def translate_jets( batch, width=1.0 ):
     shift_phi = mask*np.random.uniform(low=low_phi, high=high_phi, size=(batch.shape[0], 1))
     shift = np.stack([np.zeros((batch.shape[0], batch.shape[2])), shift_eta, shift_phi], 1)
     shifted_batch = batch+shift
+    # recalculate \delta R
+    shifted_eta = shifted_batch[:,1,:]
+    shifted_phi = shifted_batch[:,2,:]
+    delta_R = np.sqrt(shifted_eta**2 + shifted_phi**2)
+    # apply standardization
+    delta_R = (delta_R - 0.2) * 4.0
+    shifted_batch[:,-1,:] = delta_R
     return shifted_batch
 
 
