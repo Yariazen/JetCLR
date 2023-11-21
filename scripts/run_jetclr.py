@@ -9,6 +9,7 @@ import random
 import time
 import glob
 import argparse
+import copy
 
 # load torch modules
 import torch
@@ -29,12 +30,18 @@ torch.set_num_threads(2)
 
    # load data
 def load_data(dataset_path, flag, n_files=-1):
-    data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features_raw/data/*")
+    if args.full_kinematics:
+        data_files = glob.glob(f"{dataset_path}/{flag}/processed/*")
+    else:
+        data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features_raw/data/*")
 #     print_and_log(data_files)
 
     data = []
     for i, file in enumerate(data_files):
-        data += torch.load(f"{dataset_path}/{flag}/processed/3_features_raw/data/data_{i}.pt")
+        if args.full_kinematics:
+            data += torch.load(f"{dataset_path}/{flag}/processed/data_{i}.pt")
+        else:
+            data += torch.load(f"{dataset_path}/{flag}/processed/3_features_raw/data/data_{i}.pt")
         print(f"--- loaded file {i} from `{flag}` directory")
         if n_files != -1 and i == n_files - 1:
             break
@@ -75,22 +82,15 @@ def main(args):
     expt_tag = args.label
     expt_dir = base_dir + "experiments/" + expt_tag + "/"
 
-<<<<<<< HEAD
     # check if experiment already exists and is not empty
-=======
-    # check if experiment already exists
->>>>>>> 29c11ecde22d55419634279633e219e8eb382f06
+
     if os.path.isdir(expt_dir) and os.listdir(expt_dir):
         sys.exit("ERROR: experiment already exists and is not empty, don't want to overwrite it by mistake")
     else:
         # This will create the directory if it does not exist or if it is empty
         os.makedirs(expt_dir, exist_ok=True)
-<<<<<<< HEAD
-
-    print_and_log("experiment: "+str(args.label), file=logfile, flush=True)
-=======
     print("experiment: "+str(args.label), file=logfile, flush=True)
->>>>>>> 29c11ecde22d55419634279633e219e8eb382f06
+
 
  
     print( "loading data", flush=True, file=logfile )
@@ -115,11 +115,6 @@ def main(args):
     random.shuffle( ldz_tr )
     tr_dat, tr_lab = zip( *ldz_tr )
     # reducing the training data
-<<<<<<< HEAD
-    # tr_dat = np.array( tr_dat )[0:100000]
-    # tr_lab = np.array( tr_lab )[0:100000]
-=======
->>>>>>> 29c11ecde22d55419634279633e219e8eb382f06
     tr_dat = np.array( tr_dat )
     tr_lab = np.array( tr_lab )
 
@@ -159,8 +154,9 @@ def main(args):
     t1 = time.time()
 
     # re-scale test data, for the training data this will be done on the fly due to the augmentations
-    vl_dat_1 = rescale_pts( vl_dat_1 )
-    vl_dat_2 = rescale_pts( vl_dat_2 )
+    if not args.full_kinematics:
+        vl_dat_1 = rescale_pts( vl_dat_1 )
+        vl_dat_2 = rescale_pts( vl_dat_2 )
 
     print( "time taken to load and preprocess data: "+str( np.round( t1-t0, 2 ) ) + " seconds", flush=True, file=logfile )
 
@@ -189,6 +185,10 @@ def main(args):
     print( "pT smearing clip parameter: " + str( args.ptcm ) , flush=True, file=logfile )
     print( "translations: " + str( args.trs ) , flush=True, file=logfile )
     print( "translations width: " + str( args.trsw ) , flush=True, file=logfile )
+    if args.full_kinematics:
+        print( "Number of input features per particle: 7", flush=True, file=logfile )
+    else:
+        print( "Number of input features per particle: 3", flush=True, file=logfile )
     print( "---", flush=True, file=logfile )
 
     # initialise the network
@@ -253,6 +253,16 @@ def main(args):
         for i, indices in enumerate( indices_list ):
             net.optimizer.zero_grad()
             x_i = tr_dat[indices,:,:]
+            if args.full_kinematics:
+                # x_i has shape (batch_size, 7, n_constit)
+                # dim 1 ordering: 'part_deta','part_dphi','part_pt_log', 'part_e_log', 'part_logptrel', 'part_logerel','part_deltaR'
+                # extract the (pT, eta, phi) features for augmentations
+                x_i_full = copy.deepcopy( x_i )
+                x_j_full = copy.deepcopy( x_i )
+                pT = np.exp(x_i[:,2,:])
+                eta = x_i[:,0,:]
+                phi = x_i[:,1,:]
+                x_i = np.stack( [ pT, eta, phi ], 1 ) # (batch_size, 3, n_constit)
             time1 = time.time()
 #             print(x_i.shape)
             x_i = rotate_jets( x_i )
@@ -273,6 +283,43 @@ def main(args):
             time5 = time.time()
             x_i = rescale_pts( x_i )
             x_j = rescale_pts( x_j )
+            if args.full_kinematics:
+                # recalculate the rest of the features after augmentation
+                pT_i = x_i[:,2,:]
+                eta_i = x_i[:,0,:]
+                phi_i = x_i[:,1,:]
+                pT_j = x_j[:,2,:]
+                eta_j = x_j[:,0,:]
+                phi_j = x_j[:,1,:]
+                # calculate the rest of the features
+                # pT
+                pT_log_i = np.log( pT_i )
+                pT_log_j = np.log( pT_j )
+                # pTrel
+                pT_sum_i = np.sum(pT_i, dim=-1, keepdim=True)
+                pT_sum_j = np.sum(pT_j, dim=-1, keepdim=True)
+                pt_rel_i = pT_i / pT_sum_i
+                pt_rel_j = pT_j / pT_sum_j
+                pt_rel_log_i = np.log( pt_rel_i )
+                pt_rel_log_j = np.log( pt_rel_j )
+                # E
+                E_i = pT_i * np.cos( eta_i )
+                E_j = pT_j * np.cos( eta_j )
+                E_log_i = np.log( E_i )
+                E_log_j = np.log( E_j )
+                # Erel
+                E_sum_i = np.sum(E_i, dim=-1, keepdim=True)
+                E_sum_j = np.sum(E_j, dim=-1, keepdim=True)
+                E_rel_i = E_i / E_sum_i
+                E_rel_j = E_j / E_sum_j
+                E_rel_log_i = np.log( E_rel_i )
+                E_rel_log_j = np.log( E_rel_j )
+                # deltaR
+                deltaR_i = np.sqrt(np.square(eta_i) + np.square(phi_i))
+                deltaR_j = np.sqrt(np.square(eta_j) + np.square(phi_j))
+                # stack them to obtain the final augmented data
+                x_i = np.stack( [ eta_i, phi_i, pT_log_i, E_log_i, pt_rel_log_i, E_rel_log_i, deltaR_i ], 1 ) # (batch_size, 7, n_constit)
+                x_j = np.stack( [ eta_j, phi_j, pT_log_j, E_log_j, pt_rel_log_j, E_rel_log_j, deltaR_j ], 1 ) # (batch_size, 7, n_constit)
             x_i = torch.Tensor( x_i ).transpose(1,2).to( device )
             x_j = torch.Tensor( x_j ).transpose(1,2).to( device )
             time6 = time.time()
@@ -629,6 +676,14 @@ if __name__ == "__main__":
         dest="trsw",
         default=1.0,
         help="width param in translate_jets",
+    )
+    parser.add_argument(
+        "--full-kinematics",
+        type=bool,
+        action="store",
+        dest="full_kinematics",
+        default=True,
+        help="use the full 7 kinematic features instead of just 3",
     )
 
     args = parser.parse_args()
