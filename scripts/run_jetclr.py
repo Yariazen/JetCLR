@@ -303,8 +303,8 @@ def main(args):
                 pt_rel_log_i = np.log( pt_rel_i )
                 pt_rel_log_j = np.log( pt_rel_j )
                 # E
-                E_i = pT_i * np.cos( eta_i )
-                E_j = pT_j * np.cos( eta_j )
+                E_i = pT_i * np.cosh( eta_i )
+                E_j = pT_j * np.cosh( eta_j )
                 E_log_i = np.log( E_i )
                 E_log_j = np.log( E_j )
                 # Erel
