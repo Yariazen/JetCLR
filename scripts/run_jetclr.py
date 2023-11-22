@@ -28,18 +28,17 @@ from .modules.perf_eval import get_perf_stats, linear_classifier_test
 # set the number of threads that pytorch will use
 torch.set_num_threads(2)
 
-   # load data
+# load data
 def load_data(dataset_path, flag, n_files=-1):
     if args.full_kinematics:
-        data_files = glob.glob(f"{dataset_path}/{flag}/processed/*")
+        data_files = glob.glob(f"{dataset_path}/{flag}/processed/7_features_raw/data/*")
     else:
         data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features_raw/data/*")
-#     print_and_log(data_files)
 
     data = []
     for i, file in enumerate(data_files):
         if args.full_kinematics:
-            data += torch.load(f"{dataset_path}/{flag}/processed/data_{i}.pt")
+            data += torch.load(f"{dataset_path}/{flag}/processed/7_features_raw/data/data_{i}.pt")
         else:
             data += torch.load(f"{dataset_path}/{flag}/processed/3_features_raw/data/data_{i}.pt")
         print(f"--- loaded file {i} from `{flag}` directory")
@@ -50,11 +49,11 @@ def load_data(dataset_path, flag, n_files=-1):
 
 
 def load_labels(dataset_path, flag, n_files=-1):
-    data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features/labels/*")
+    data_files = glob.glob(f"{dataset_path}/{flag}/processed/7_features_raw/labels/*")
 
     data = []
     for i, file in enumerate(data_files):
-        data += torch.load(f"{dataset_path}/{flag}/processed/3_features/labels/labels_{i}.pt")
+        data += torch.load(f"{dataset_path}/{flag}/processed/7_features_raw/labels/labels_{i}.pt")
         print(f"--- loaded label file {i} from `{flag}` directory")
         if n_files != -1 and i == n_files - 1:
             break
@@ -91,8 +90,6 @@ def main(args):
         os.makedirs(expt_dir, exist_ok=True)
     print("experiment: "+str(args.label), file=logfile, flush=True)
 
-
- 
     print( "loading data", flush=True, file=logfile )
     data = load_data("/ssl-jet-vol-v2/toptagging", "train", args.num_files)
     labels = load_labels("/ssl-jet-vol-v2/toptagging", "train", args.num_files)
@@ -138,10 +135,19 @@ def main(args):
     vl_dat_2 = vl_dat[ -vl_split_len: ]
     vl_lab_2 = vl_lab[ -vl_split_len: ]
 
+
     # cropping all jets to a fixed number of consituents
     tr_dat = crop_jets( tr_dat, args.nconstit )
     vl_dat_1 = crop_jets( vl_dat_1, args.nconstit )
     vl_dat_2 = crop_jets( vl_dat_2, args.nconstit )
+
+    # reducing the validation data for consistency
+    val_cut = 50000 # 50k jets
+    vl_dat_1 = vl_dat_1[ 0:val_cut ]
+    vl_lab_1 = vl_lab_1[ 0:val_cut ]
+    vl_dat_2 = vl_dat_2[ 0:val_cut ]
+    vl_lab_2 = vl_lab_2[ 0:val_cut ]
+
 
     # print data dimensions
     print( "training data shape: " + str( tr_dat.shape ), flush=True, file=logfile )
@@ -257,8 +263,6 @@ def main(args):
                 # x_i has shape (batch_size, 7, n_constit)
                 # dim 1 ordering: 'part_deta','part_dphi','part_pt_log', 'part_e_log', 'part_logptrel', 'part_logerel','part_deltaR'
                 # extract the (pT, eta, phi) features for augmentations
-                x_i_full = copy.deepcopy( x_i )
-                x_j_full = copy.deepcopy( x_i )
                 pT = np.exp(x_i[:,2,:])
                 eta = x_i[:,0,:]
                 phi = x_i[:,1,:]
@@ -375,7 +379,7 @@ def main(args):
             r = torch.cuda.memory_reserved(0)
             a = torch.cuda.memory_allocated(0)
             f = r - a  # free inside reserved
-            print( f"CUDA memory: total {t}, reserved {r}, allocated {a}", flush=True, file=logfile )
+            print( f"CUDA memory: total {t / np.pow(1024,3)}G, reserved {r/ np.pow(1024,3)}G, allocated {a/ np.pow(1024,3)}G, free {f/ np.pow(1024,3)}G", flush=True, file=logfile )
 
         # summarise alignment and uniformity stats
         if epoch%10==0:
