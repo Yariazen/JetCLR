@@ -38,9 +38,9 @@ def load_data(dataset_path, flag, n_files=-1):
     data = []
     for i, file in enumerate(data_files):
         if args.full_kinematics:
-            data += torch.load(f"{dataset_path}/{flag}/processed/7_features_raw/data/data_{i}.pt")
+            data += torch.load(f"{dataset_path}/{flag}/processed/7_features_raw/data/data_{i}.npy")
         else:
-            data += torch.load(f"{dataset_path}/{flag}/processed/3_features_raw/data/data_{i}.pt")
+            data += torch.load(f"{dataset_path}/{flag}/processed/3_features_raw/data/data_{i}.npy")
         print(f"--- loaded file {i} from `{flag}` directory")
         if n_files != -1 and i == n_files - 1:
             break
@@ -53,7 +53,7 @@ def load_labels(dataset_path, flag, n_files=-1):
 
     data = []
     for i, file in enumerate(data_files):
-        data += torch.load(f"{dataset_path}/{flag}/processed/7_features_raw/labels/labels_{i}.pt")
+        data += torch.load(f"{dataset_path}/{flag}/processed/7_features_raw/labels/labels_{i}.npy")
         print(f"--- loaded label file {i} from `{flag}` directory")
         if n_files != -1 and i == n_files - 1:
             break
