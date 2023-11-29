@@ -38,9 +38,9 @@ def load_data(dataset_path, flag, n_files=-1):
     data = []
     for i, file in enumerate(data_files):
         if args.full_kinematics:
-            data += torch.load(f"{dataset_path}/{flag}/processed/7_features_raw/data/data_{i}.npy")
+            data.append(np.load(f"{dataset_path}/{flag}/processed/7_features_raw/data/data_{i}.npy")) 
         else:
-            data += torch.load(f"{dataset_path}/{flag}/processed/3_features_raw/data/data_{i}.npy")
+            data.append(np.load(f"{dataset_path}/{flag}/processed/3_features_raw/data/data_{i}.npy")) 
         print(f"--- loaded file {i} from `{flag}` directory")
         if n_files != -1 and i == n_files - 1:
             break
@@ -53,7 +53,7 @@ def load_labels(dataset_path, flag, n_files=-1):
 
     data = []
     for i, file in enumerate(data_files):
-        data += torch.load(f"{dataset_path}/{flag}/processed/7_features_raw/labels/labels_{i}.npy")
+        data.append(np.load(f"{dataset_path}/{flag}/processed/7_features_raw/labels/labels_{i}.npy"))
         print(f"--- loaded label file {i} from `{flag}` directory")
         if n_files != -1 and i == n_files - 1:
             break
@@ -90,11 +90,11 @@ def main(args):
         os.makedirs(expt_dir, exist_ok=True)
     print("experiment: "+str(args.label), file=logfile, flush=True)
 
-    print( "loading data", flush=True, file=logfile )
+    print( "loading data")
     data = load_data("/ssl-jet-vol-v2/toptagging", "train", args.num_files)
     labels = load_labels("/ssl-jet-vol-v2/toptagging", "train", args.num_files)
-    tr_dat_in = np.stack(data)
-    tr_lab_in = np.stack(labels)
+    tr_dat_in = np.concatenate(data, axis=0)  # Concatenate along the first axis
+    tr_lab_in = np.concatenate(labels, axis=0)
 
     # input dim to the transformer -> (pt,eta,phi)
     input_dim = tr_dat_in.shape[1]
