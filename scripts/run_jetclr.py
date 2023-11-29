@@ -379,7 +379,7 @@ def main(args):
             r = torch.cuda.memory_reserved(0)
             a = torch.cuda.memory_allocated(0)
             f = r - a  # free inside reserved
-            print( f"CUDA memory: total {t / np.pow(1024,3)}G, reserved {r/ np.pow(1024,3)}G, allocated {a/ np.pow(1024,3)}G, free {f/ np.pow(1024,3)}G", flush=True, file=logfile )
+            print( f"CUDA memory: total {t / np.power(1024,3)}G, reserved {r/ np.power(1024,3)}G, allocated {a/ np.power(1024,3)}G, free {f/ np.power(1024,3)}G", flush=True, file=logfile )
 
         # summarise alignment and uniformity stats
         if epoch%10==0:
