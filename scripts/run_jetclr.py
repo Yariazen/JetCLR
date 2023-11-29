@@ -300,8 +300,8 @@ def main(args):
                 pT_log_i = np.log( pT_i )
                 pT_log_j = np.log( pT_j )
                 # pTrel
-                pT_sum_i = np.sum(pT_i, axis=-1, keepdim=True)
-                pT_sum_j = np.sum(pT_j, axis=-1, keepdim=True)
+                pT_sum_i = np.sum(pT_i, axis=-1, keepdims=True)
+                pT_sum_j = np.sum(pT_j, axis=-1, keepdims=True)
                 pt_rel_i = pT_i / pT_sum_i
                 pt_rel_j = pT_j / pT_sum_j
                 pt_rel_log_i = np.log( pt_rel_i )
@@ -312,8 +312,8 @@ def main(args):
                 E_log_i = np.log( E_i )
                 E_log_j = np.log( E_j )
                 # Erel
-                E_sum_i = np.sum(E_i, axis=-1, keepdim=True)
-                E_sum_j = np.sum(E_j, axis=-1, keepdim=True)
+                E_sum_i = np.sum(E_i, axis=-1, keepdims=True)
+                E_sum_j = np.sum(E_j, axis=-1, keepdims=True)
                 E_rel_i = E_i / E_sum_i
                 E_rel_j = E_j / E_sum_j
                 E_rel_log_i = np.log( E_rel_i )
