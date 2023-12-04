@@ -298,26 +298,34 @@ def main(args):
                 # calculate the rest of the features
                 # pT
                 pT_log_i = np.log( pT_i )
+                pT_log_i = np.nan_to_num(pT_log_i, nan=0.0)
                 pT_log_j = np.log( pT_j )
+                pT_log_j = np.nan_to_num(pT_log_j, nan=0.0)
                 # pTrel
                 pT_sum_i = np.sum(pT_i, axis=-1, keepdims=True)
                 pT_sum_j = np.sum(pT_j, axis=-1, keepdims=True)
                 pt_rel_i = pT_i / pT_sum_i
                 pt_rel_j = pT_j / pT_sum_j
                 pt_rel_log_i = np.log( pt_rel_i )
+                pt_rel_log_i = np.nan_to_num(pt_rel_log_i, nan=0.0)
                 pt_rel_log_j = np.log( pt_rel_j )
+                pt_rel_log_j = np.nan_to_num(pt_rel_log_j, nan=0.0)
                 # E
                 E_i = pT_i * np.cosh( eta_i )
                 E_j = pT_j * np.cosh( eta_j )
                 E_log_i = np.log( E_i )
+                E_log_i = np.nan_to_num(E_log_i, nan=0.0)
                 E_log_j = np.log( E_j )
+                E_log_j = np.nan_to_num(E_log_j, nan=0.0)
                 # Erel
                 E_sum_i = np.sum(E_i, axis=-1, keepdims=True)
                 E_sum_j = np.sum(E_j, axis=-1, keepdims=True)
                 E_rel_i = E_i / E_sum_i
                 E_rel_j = E_j / E_sum_j
                 E_rel_log_i = np.log( E_rel_i )
+                E_rel_log_i = np.nan_to_num(E_rel_log_i, nan=0.0)
                 E_rel_log_j = np.log( E_rel_j )
+                E_rel_log_j = np.nan_to_num(E_rel_log_j, nan=0.0)
                 # deltaR
                 deltaR_i = np.sqrt(np.square(eta_i) + np.square(phi_i))
                 deltaR_j = np.sqrt(np.square(eta_j) + np.square(phi_j))
@@ -394,9 +402,9 @@ def main(args):
         # run a short LCT
         if epoch%10==0:
             print( "--- LCT ----" , flush=True, file=logfile )
-            if args.trs:
-                vl_dat_1 = translate_jets( vl_dat_1, width=args.trsw )
-                vl_dat_2 = translate_jets( vl_dat_2, width=args.trsw )
+            # if args.trs:
+            #     vl_dat_1 = translate_jets( vl_dat_1, width=args.trsw )
+            #     vl_dat_2 = translate_jets( vl_dat_2, width=args.trsw )
             # get the validation reps
             with torch.no_grad():
                 net.eval()
@@ -464,9 +472,9 @@ def main(args):
     print( "starting the final LCT run", flush=True, file=logfile )
 
     # evaluate the network on the testing data, applying some augmentations first if it's required
-    if args.trs:
-        vl_dat_1 = translate_jets( vl_dat_1, width=args.trsw )
-        vl_dat_2 = translate_jets( vl_dat_2, width=args.trsw )
+    # if args.trs:
+    #     vl_dat_1 = translate_jets( vl_dat_1, width=args.trsw )
+    #     vl_dat_2 = translate_jets( vl_dat_2, width=args.trsw )
     with torch.no_grad():
         net.eval()
         #vl_reps_1 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
