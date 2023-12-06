@@ -74,6 +74,8 @@ def main(args):
 
     # set gpu device
     device = torch.device( "cuda" if torch.cuda.is_available() else "cpu" )
+    if args.device == "cpu":
+        device = torch.device( "cpu" )
     print( "device: " + str( device ), flush=True, file=logfile )
 
     # set up results directory
@@ -513,7 +515,14 @@ def main(args):
 if __name__ == "__main__":
     """This is executed when run from the command line"""
     parser = argparse.ArgumentParser()
-
+    parser.add_argument(
+        "--device",
+        type=str,
+        action="store",
+        dest="device",
+        default="cuda",
+        help="device to train on",
+    )
     parser.add_argument(
         "--dataset-path",
         type=str,
