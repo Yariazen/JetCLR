@@ -297,34 +297,34 @@ def main(args):
                 phi_j = x_j[:,1,:]
                 # calculate the rest of the features
                 # pT
-                pT_log_i = np.log( pT_i )
+                pT_log_i = np.log( np.abs(pT_i) )
                 pT_log_i = np.nan_to_num(pT_log_i, nan=0.0)
-                pT_log_j = np.log( pT_j )
+                pT_log_j = np.log( np.abs(pT_j) )
                 pT_log_j = np.nan_to_num(pT_log_j, nan=0.0)
                 # pTrel
                 pT_sum_i = np.sum(pT_i, axis=-1, keepdims=True)
                 pT_sum_j = np.sum(pT_j, axis=-1, keepdims=True)
                 pt_rel_i = pT_i / pT_sum_i
                 pt_rel_j = pT_j / pT_sum_j
-                pt_rel_log_i = np.log( pt_rel_i )
+                pt_rel_log_i = np.log( np.abs(pt_rel_i) )
                 pt_rel_log_i = np.nan_to_num(pt_rel_log_i, nan=0.0)
-                pt_rel_log_j = np.log( pt_rel_j )
+                pt_rel_log_j = np.log( np.abs(pt_rel_j ))
                 pt_rel_log_j = np.nan_to_num(pt_rel_log_j, nan=0.0)
                 # E
                 E_i = pT_i * np.cosh( eta_i )
                 E_j = pT_j * np.cosh( eta_j )
-                E_log_i = np.log( E_i )
+                E_log_i = np.log( np.abs(E_i) )
                 E_log_i = np.nan_to_num(E_log_i, nan=0.0)
-                E_log_j = np.log( E_j )
+                E_log_j = np.log( np.abs(E_j) )
                 E_log_j = np.nan_to_num(E_log_j, nan=0.0)
                 # Erel
                 E_sum_i = np.sum(E_i, axis=-1, keepdims=True)
                 E_sum_j = np.sum(E_j, axis=-1, keepdims=True)
                 E_rel_i = E_i / E_sum_i
                 E_rel_j = E_j / E_sum_j
-                E_rel_log_i = np.log( E_rel_i )
+                E_rel_log_i = np.log( np.abs(E_rel_i) )
                 E_rel_log_i = np.nan_to_num(E_rel_log_i, nan=0.0)
-                E_rel_log_j = np.log( E_rel_j )
+                E_rel_log_j = np.log( np.abs(E_rel_j) )
                 E_rel_log_j = np.nan_to_num(E_rel_log_j, nan=0.0)
                 # deltaR
                 deltaR_i = np.sqrt(np.square(eta_i) + np.square(phi_i))
