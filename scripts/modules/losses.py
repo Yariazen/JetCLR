@@ -27,6 +27,7 @@ def contrastive_loss( x_i, x_j, temperature ):
 
 def align_loss(x, y, alpha=2):
     xdevice = x.get_device()
+    print('device', xdevice)
     reps_x = x.clone()
     reps_y = y.clone()
     reps_x = F.normalize(reps_x, dim=1).to(xdevice)
