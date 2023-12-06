@@ -9,6 +9,8 @@ import torch.nn.functional as F
 
 def contrastive_loss( x_i, x_j, temperature ):
     xdevice = x_i.get_device()
+    if xdevice == -1:
+        xdevice = 'cpu'
     batch_size = x_i.shape[0]
     z_i = F.normalize( x_i, dim=1 )
     z_j = F.normalize( x_j, dim=1 )
@@ -27,7 +29,9 @@ def contrastive_loss( x_i, x_j, temperature ):
 
 def align_loss(x, y, alpha=2):
     xdevice = x.get_device()
-    print('device', xdevice)
+    if xdevice == -1:
+        xdevice = 'cpu'
+    # print('device', xdevice)
     reps_x = x.clone()
     reps_y = y.clone()
     reps_x = F.normalize(reps_x, dim=1).to(xdevice)
@@ -37,6 +41,8 @@ def align_loss(x, y, alpha=2):
 
 def uniform_loss(x, t=2):
     xdevice = x.get_device()
+    if xdevice == -1:
+        xdevice = 'cpu'
     reps_x = x.clone()
     reps_x = F.normalize(reps_x, dim=1).to(xdevice)
     loss_uniform = torch.pdist(reps_x, p=2).pow(2).mul(-t).exp().mean().log()
