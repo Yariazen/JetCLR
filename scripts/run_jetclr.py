@@ -402,39 +402,38 @@ def main(args):
             print( "num threads in use: " + str( torch.get_num_threads() ), flush=True, file=logfile )
 
         # run a short LCT
-        # TODO: fix LCT to work with the new dataset
-        # if epoch%10==0:
-        #     print( "--- LCT ----" , flush=True, file=logfile )
-        #     # if args.trs:
-        #     #     vl_dat_1 = translate_jets( vl_dat_1, width=args.trsw )
-        #     #     vl_dat_2 = translate_jets( vl_dat_2, width=args.trsw )
-        #     # get the validation reps
-        #     with torch.no_grad():
-        #         net.eval()
-        #         #vl_reps_1 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
-        #         #vl_reps_2 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
-        #         vl_reps_1 = net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
-        #         vl_reps_2 = net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
-        #         net.train()
-        #     # running the LCT on each rep layer
-        #     auc_list = []
-        #     imtafe_list = []
-        #     # loop through every representation layer
-        #     for i in range(vl_reps_1.shape[1]):   
-        #         # just want to use the 0th rep (i.e. directly from the transformer) for now
-        #         if i == 1:
-        #             vl0_test = time.time()
-        #             out_dat_vl, out_lbs_vl, losses_vl = linear_classifier_test( linear_input_size, linear_batch_size, linear_n_epochs, "adam", linear_learning_rate, vl_reps_1[:,i,:], vl_lab_1, vl_reps_2[:,i,:], vl_lab_2 )
-        #             auc, imtafe = get_perf_stats( out_lbs_vl, out_dat_vl )
-        #             auc_list.append( auc )
-        #             imtafe_list.append( imtafe )
-        #             vl1_test = time.time()
-        #             print( "LCT layer " + str(i) + "- time taken: " + str( np.round( vl1_test - vl0_test, 2 ) ), flush=True, file=logfile )
-        #             print( "auc: " + str( np.round( auc, 4 ) ) + ", imtafe: " + str( round( imtafe, 1 ) ), flush=True, file=logfile )
-        #             np.save( expt_dir + "lct_ep" +str(epoch) + "_r" +str(i) + "_losses.npy", losses_vl )
-        #     auc_epochs.append( auc_list )
-        #     imtafe_epochs.append( imtafe_list )
-        #     print( "---- --- ----" , flush=True, file=logfile )
+        if epoch%10==0:
+            print( "--- LCT ----" , flush=True, file=logfile )
+            # if args.trs:
+            #     vl_dat_1 = translate_jets( vl_dat_1, width=args.trsw )
+            #     vl_dat_2 = translate_jets( vl_dat_2, width=args.trsw )
+            # get the validation reps
+            with torch.no_grad():
+                net.eval()
+                #vl_reps_1 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
+                #vl_reps_2 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
+                vl_reps_1 = net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
+                vl_reps_2 = net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
+                net.train()
+            # running the LCT on each rep layer
+            auc_list = []
+            imtafe_list = []
+            # loop through every representation layer
+            for i in range(vl_reps_1.shape[1]):   
+                # just want to use the 0th rep (i.e. directly from the transformer) for now
+                if i == 1:
+                    vl0_test = time.time()
+                    out_dat_vl, out_lbs_vl, losses_vl = linear_classifier_test( linear_input_size, linear_batch_size, linear_n_epochs, "adam", linear_learning_rate, vl_reps_1[:,i,:], vl_lab_1, vl_reps_2[:,i,:], vl_lab_2 )
+                    auc, imtafe = get_perf_stats( out_lbs_vl, out_dat_vl )
+                    auc_list.append( auc )
+                    imtafe_list.append( imtafe )
+                    vl1_test = time.time()
+                    print( "LCT layer " + str(i) + "- time taken: " + str( np.round( vl1_test - vl0_test, 2 ) ), flush=True, file=logfile )
+                    print( "auc: " + str( np.round( auc, 4 ) ) + ", imtafe: " + str( round( imtafe, 1 ) ), flush=True, file=logfile )
+                    np.save( expt_dir + "lct_ep" +str(epoch) + "_r" +str(i) + "_losses.npy", losses_vl )
+            auc_epochs.append( auc_list )
+            imtafe_epochs.append( imtafe_list )
+            print( "---- --- ----" , flush=True, file=logfile )
 
         # saving the model
         if epoch % 10 == 0:
@@ -449,9 +448,8 @@ def main(args):
             print( "saving out data/results", flush=True, file=logfile )
             tds0 = time.time()
             np.save( expt_dir + "clr_losses.npy", losses )
-            # TODO: uncomment after fixing LCT
-            # np.save( expt_dir + "auc_epochs.npy", np.array( auc_epochs ) )
-            # np.save( expt_dir + "imtafe_epochs.npy", np.array( imtafe_epochs ) )
+            np.save( expt_dir + "auc_epochs.npy", np.array( auc_epochs ) )
+            np.save( expt_dir + "imtafe_epochs.npy", np.array( imtafe_epochs ) )
             np.save( expt_dir + "align_loss_train.npy", loss_align_epochs )
             np.save( expt_dir + "uniform_loss_train.npy", loss_uniform_epochs )
             tds1 = time.time()
@@ -464,9 +462,8 @@ def main(args):
     # save out results
     print( "saving out data/results", flush=True, file=logfile )
     np.save( expt_dir+"clr_losses.npy", losses )
-    # TODO: uncomment after fixing LCT
-    # np.save( expt_dir+"auc_epochs.npy", np.array( auc_epochs ) )
-    # np.save( expt_dir+"imtafe_epochs.npy", np.array( imtafe_epochs ) )
+    np.save( expt_dir+"auc_epochs.npy", np.array( auc_epochs ) )
+    np.save( expt_dir+"imtafe_epochs.npy", np.array( imtafe_epochs ) )
     np.save( expt_dir+"align_loss_train.npy", loss_align_epochs )
     np.save( expt_dir+"uniform_loss_train.npy", loss_uniform_epochs )
 
@@ -474,39 +471,38 @@ def main(args):
     print( "saving out final jetCLR model", flush=True, file=logfile )
     torch.save(net.state_dict(), expt_dir+"final_model.pt")
 
-    # TODO: uncomment after fixing LCT
-    # print( "starting the final LCT run", flush=True, file=logfile )
+    print( "starting the final LCT run", flush=True, file=logfile )
 
-    # # evaluate the network on the testing data, applying some augmentations first if it's required
-    # # if args.trs:
-    # #     vl_dat_1 = translate_jets( vl_dat_1, width=args.trsw )
-    # #     vl_dat_2 = translate_jets( vl_dat_2, width=args.trsw )
-    # with torch.no_grad():
-    #     net.eval()
-    #     #vl_reps_1 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
-    #     #vl_reps_2 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
-    #     vl_reps_1 = net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
-    #     vl_reps_2 = net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
-    #     net.train()
+    # evaluate the network on the testing data, applying some augmentations first if it's required
+    # if args.trs:
+    #     vl_dat_1 = translate_jets( vl_dat_1, width=args.trsw )
+    #     vl_dat_2 = translate_jets( vl_dat_2, width=args.trsw )
+    with torch.no_grad():
+        net.eval()
+        #vl_reps_1 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
+        #vl_reps_2 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
+        vl_reps_1 = net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
+        vl_reps_2 = net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu().numpy()
+        net.train()
 
-    # # final LCT for each rep layer
-    # for i in range(vl_reps_1.shape[1]):
-    #     t3 = time.time()
-    #     out_dat_f, out_lbs_f, losses_f = linear_classifier_test( linear_input_size, linear_batch_size, linear_n_epochs, "adam", linear_learning_rate, vl_reps_1[:,i,:], vl_lab_1, vl_reps_2[:,i,:], vl_lab_2 )
-    #     auc, imtafe = get_perf_stats( out_lbs_f, out_dat_f )
-    #     ep=0
-    #     step_size = 25
-    #     for lss in losses_f[::step_size]:
-    #         print( f"(rep layer {i}) epoch: " + str( ep ) + ", loss: " + str( lss ), flush=True, file=logfile )
-    #         ep+=step_size
-    #     print( f"(rep layer {i}) auc: "+str( round(auc, 4) ), flush=True, file=logfile )
-    #     print( f"(rep layer {i}) imtafe: "+str( round(imtafe, 1) ), flush=True, file=logfile )
-    #     t4 = time.time()
-    #     np.save( expt_dir+f"linear_losses_{i}.npy", losses_f )
-    #     np.save( expt_dir+f"test_linear_cl_{i}.npy", out_dat_f )
+    # final LCT for each rep layer
+    for i in range(vl_reps_1.shape[1]):
+        t3 = time.time()
+        out_dat_f, out_lbs_f, losses_f = linear_classifier_test( linear_input_size, linear_batch_size, linear_n_epochs, "adam", linear_learning_rate, vl_reps_1[:,i,:], vl_lab_1, vl_reps_2[:,i,:], vl_lab_2 )
+        auc, imtafe = get_perf_stats( out_lbs_f, out_dat_f )
+        ep=0
+        step_size = 25
+        for lss in losses_f[::step_size]:
+            print( f"(rep layer {i}) epoch: " + str( ep ) + ", loss: " + str( lss ), flush=True, file=logfile )
+            ep+=step_size
+        print( f"(rep layer {i}) auc: "+str( round(auc, 4) ), flush=True, file=logfile )
+        print( f"(rep layer {i}) imtafe: "+str( round(imtafe, 1) ), flush=True, file=logfile )
+        t4 = time.time()
+        np.save( expt_dir+f"linear_losses_{i}.npy", losses_f )
+        np.save( expt_dir+f"test_linear_cl_{i}.npy", out_dat_f )
 
-    # print( "final LCT  done and output saved, time taken: " + str( np.round( t4-t3, 2 ) ), flush=True, file=logfile )
-    # print("............................", flush=True, file=logfile)
+    print( "final LCT  done and output saved, time taken: " + str( np.round( t4-t3, 2 ) ), flush=True, file=logfile )
+    print("............................", flush=True, file=logfile)
 
     t5 = time.time()
 
