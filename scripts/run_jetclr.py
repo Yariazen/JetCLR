@@ -72,11 +72,16 @@ def main(args):
     logfile = open( args.logfile, "a" )
     print( "logfile initialised", file=logfile, flush=True )
 
-    # set gpu device
-    device = torch.device( "cuda" if torch.cuda.is_available() else "cpu" )
-    if args.device == "cpu":
+    # define the global base device
+    world_size = torch.cuda.device_count()
+    if world_size:
+        device = torch.device("cuda:0")
+        for i in range(world_size):
+            print(f"Device {i}: {torch.cuda.get_device_name(i)}")
+    else:
         device = torch.device( "cpu" )
-    print( "device: " + str( device ), flush=True, file=logfile )
+        print("Device: CPU")
+    args.device = device
 
     # set up results directory
     base_dir = "/ssl-jet-vol-v2/JetCLR/models/"
