@@ -38,26 +38,40 @@ torch.set_num_threads(2)
 
 # load data
 def load_data(dataset_path, flag, n_files=-1):
+    # make another variable that combines flag and subdirectory such as 3_features_raw
+    path_id = f"{flag}-"
     if args.full_kinematics:
         data_files = glob.glob(f"{dataset_path}/{flag}/processed/7_features_raw/data/*")
-    else:
+        path_id += "7_features_raw"
+    elif args.raw_3:
         data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features_raw/data/*")
+        path_id += "3_features_raw"
+    else:
+        data_files = glob.glob(f"{dataset_path}/{flag}/processed/3_features/data/*")
+        path_id += "3_features_relative"
 
     data = []
-    for i, file in enumerate(data_files):
+    for i, _ in enumerate(data_files):
         if args.full_kinematics:
             data.append(
                 np.load(
                     f"{dataset_path}/{flag}/processed/7_features_raw/data/data_{i}.npy"
                 )
             )
-        else:
+        elif args.raw_3:
             data.append(
                 torch.load(
                     f"{dataset_path}/{flag}/processed/3_features_raw/data/data_{i}.pt"
                 ).numpy()
             )
-        print(f"--- loaded file {i} from `{flag}` directory")
+        else:
+            data.append(
+                torch.load(
+                    f"{dataset_path}/{flag}/processed/3_features/data/data_{i}.pt"
+                ).numpy()
+            )
+
+        print(f"--- loaded file {i} from `{path_id}` directory")
         if n_files != -1 and i == n_files - 1:
             break
 
@@ -938,6 +952,22 @@ if __name__ == "__main__":
         dest="full_kinematics",
         default=True,
         help="use the full 7 kinematic features instead of just 3",
+    )
+    parser.add_argument(
+        "--relative-3",
+        type=bool,
+        action="store",
+        dest="relative_3",
+        default=False,
+        help="use the 3 relative features",
+    )
+    parser.add_argument(
+        "--raw-3",
+        type=bool,
+        action="store",
+        dest="raw_3",
+        default=False,
+        help="use the 3 raw features",
     )
 
     args = parser.parse_args()
