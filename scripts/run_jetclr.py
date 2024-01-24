@@ -112,10 +112,12 @@ def main(args):
     if world_size:
         device = torch.device("cuda:0")
         for i in range(world_size):
-            print(f"Device {i}: {torch.cuda.get_device_name(i)}")
+            print(
+                f"Device {i}: {torch.cuda.get_device_name(i)}", file=logfile, flush=True
+            )
     else:
         device = torch.device("cpu")
-        print("Device: CPU")
+        print("Device: CPU", file=logfile, flush=True)
     args.device = device
 
     # set up results directory
