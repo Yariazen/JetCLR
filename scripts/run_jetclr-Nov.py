@@ -443,7 +443,7 @@ def main(args):
                 # just want to use the 0th rep (i.e. directly from the transformer) for now
                 if i == 1:
                     vl0_test = time.time()
-                    out_dat_vl, out_lbs_vl, losses_vl = linear_classifier_test(
+                    out_dat_vl, out_lbs_vl, losses_vl, _ = linear_classifier_test(
                         linear_input_size,
                         linear_batch_size,
                         linear_n_epochs,
