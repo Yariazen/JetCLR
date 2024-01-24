@@ -579,10 +579,10 @@ def main(args):
                         linear_n_epochs,
                         "adam",
                         linear_learning_rate,
+                        vl_reps_1[:, i, :],
                         np.expand_dims(vl_lab_1, axis=1),
-                        vl_lab_1,
+                        vl_reps_2[:, i, :],
                         np.expand_dims(vl_lab_2, axis=1),
-                        vl_lab_2,
                     )
                     auc, imtafe = get_perf_stats(out_lbs_vl, out_dat_vl)
                     auc_list.append(auc)
@@ -708,10 +708,10 @@ def main(args):
             linear_n_epochs,
             "adam",
             linear_learning_rate,
+            vl_reps_1[:, i, :],
             np.expand_dims(vl_lab_1, axis=1),
-            vl_lab_1,
+            vl_reps_2[:, i, :],
             np.expand_dims(vl_lab_2, axis=1),
-            vl_lab_2,
         )
         auc, imtafe = get_perf_stats(out_lbs_f, out_dat_f)
         ep = 0
