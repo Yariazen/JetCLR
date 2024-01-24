@@ -572,10 +572,11 @@ def main(args):
     # final LCT for each rep layer
     for i in range(vl_reps_1.shape[1]):
         t3 = time.time()
-        out_dat_f, out_lbs_f, losses_f = linear_classifier_test(
+        out_dat_f, out_lbs_f, losses_f, _ = linear_classifier_test(
             linear_input_size,
             linear_batch_size,
             linear_n_epochs,
+            "adam",
             linear_learning_rate,
             vl_reps_1[:, i, :],
             np.expand_dims(vl_lab_1, axis=1),
