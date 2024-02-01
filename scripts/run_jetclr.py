@@ -268,6 +268,7 @@ def main(args):
         args.n_head_layers,
         dropout=0.1,
         opt=args.opt,
+        log=args.full_kinematics,
     )
 
     # send network to device
@@ -337,7 +338,7 @@ def main(args):
             x_i = tr_dat[indices, :, :]
             if args.full_kinematics:
                 # x_i has shape (batch_size, 7, n_constit)
-                # dim 1 ordering: 'part_deta','part_dphi','part_pt_log', 'part_e_log', 'part_logptrel', 'part_logerel','part_deltaR'
+                # dim 1 ordering: 'part_eta','part_phi','part_pt_log', 'part_e_log', 'part_logptrel', 'part_logerel','part_deltaR'
                 # extract the (pT, eta, phi) features for augmentations
                 pT = np.exp(x_i[:, 2, :])
                 eta = x_i[:, 0, :]
