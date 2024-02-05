@@ -856,13 +856,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--mask",
-        type=bool,
+        type=int,
         action="store",
         help="use mask in transformer",
     )
     parser.add_argument(
         "--cmask",
-        type=bool,
+        type=int,
         action="store",
         help="use continuous mask in transformer",
     )
@@ -956,14 +956,14 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--full-kinematics",
-        type=bool,
+        type=int,
         action="store",
         dest="full_kinematics",
         help="use the full 7 kinematic features instead of just 3",
     )
     parser.add_argument(
         "--raw-3",
-        type=bool,
+        type=int,
         action="store",
         dest="raw_3",
         help="use the 3 raw features",
