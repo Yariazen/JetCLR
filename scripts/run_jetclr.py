@@ -957,23 +957,13 @@ if __name__ == "__main__":
         type=bool,
         action="store",
         dest="full_kinematics",
-        default=True,
         help="use the full 7 kinematic features instead of just 3",
-    )
-    parser.add_argument(
-        "--relative-3",
-        type=bool,
-        action="store",
-        dest="relative_3",
-        default=False,
-        help="use the 3 relative features",
     )
     parser.add_argument(
         "--raw-3",
         type=bool,
         action="store",
         dest="raw_3",
-        default=False,
         help="use the 3 raw features",
     )
 
