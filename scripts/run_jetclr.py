@@ -340,7 +340,10 @@ def main(args):
                 # x_i has shape (batch_size, 7, n_constit)
                 # dim 1 ordering: 'part_eta','part_phi','part_pt_log', 'part_e_log', 'part_logptrel', 'part_logerel','part_deltaR'
                 # extract the (pT, eta, phi) features for augmentations
-                pT = np.exp(x_i[:, 2, :])
+                log_pT = x_i[:, 2, :]
+                pT = np.where(
+                    log_pT != 0, np.exp(log_pT), 0
+                )  # this handles zero-padding
                 eta = x_i[:, 0, :]
                 phi = x_i[:, 1, :]
                 x_i = np.stack([pT, eta, phi], 1)  # (batch_size, 3, n_constit)
@@ -362,46 +365,47 @@ def main(args):
                 x_j = translate_jets(x_j, width=args.trsw)
                 x_i = translate_jets(x_i, width=args.trsw)
             time5 = time.time()
-            x_i = rescale_pts(x_i)
-            x_j = rescale_pts(x_j)
+            if not args.full_kinematics:
+                x_i = rescale_pts(x_i)
+                x_j = rescale_pts(x_j)
             if args.full_kinematics:
                 # recalculate the rest of the features after augmentation
-                pT_i = x_i[:, 2, :]
-                eta_i = x_i[:, 0, :]
-                phi_i = x_i[:, 1, :]
-                pT_j = x_j[:, 2, :]
-                eta_j = x_j[:, 0, :]
-                phi_j = x_j[:, 1, :]
+                pT_i = x_i[:, 0, :]
+                eta_i = x_i[:, 1, :]
+                phi_i = x_i[:, 2, :]
+                pT_j = x_j[:, 0, :]
+                eta_j = x_j[:, 1, :]
+                phi_j = x_j[:, 2, :]
                 # calculate the rest of the features
                 # pT
-                pT_log_i = np.log(np.abs(pT_i))
+                pT_log_i = np.where(pT_i != 0, np.log(pT_i), 0)
                 pT_log_i = np.nan_to_num(pT_log_i, nan=0.0)
-                pT_log_j = np.log(np.abs(pT_j))
+                pT_log_j = np.where(pT_j != 0, np.log(pT_j), 0)
                 pT_log_j = np.nan_to_num(pT_log_j, nan=0.0)
                 # pTrel
                 pT_sum_i = np.sum(pT_i, axis=-1, keepdims=True)
                 pT_sum_j = np.sum(pT_j, axis=-1, keepdims=True)
                 pt_rel_i = pT_i / pT_sum_i
                 pt_rel_j = pT_j / pT_sum_j
-                pt_rel_log_i = np.log(np.abs(pt_rel_i))
+                pt_rel_log_i = np.where(pt_rel_i != 0, np.log(pt_rel_i), 0)
                 pt_rel_log_i = np.nan_to_num(pt_rel_log_i, nan=0.0)
-                pt_rel_log_j = np.log(np.abs(pt_rel_j))
+                pt_rel_log_j = np.where(pt_rel_j != 0, np.log(pt_rel_j), 0)
                 pt_rel_log_j = np.nan_to_num(pt_rel_log_j, nan=0.0)
                 # E
                 E_i = pT_i * np.cosh(eta_i)
                 E_j = pT_j * np.cosh(eta_j)
-                E_log_i = np.log(np.abs(E_i))
+                E_log_i = np.where(E_i != 0, np.log(E_i), 0)
                 E_log_i = np.nan_to_num(E_log_i, nan=0.0)
-                E_log_j = np.log(np.abs(E_j))
+                E_log_j = np.where(E_j != 0, np.log(E_j), 0)
                 E_log_j = np.nan_to_num(E_log_j, nan=0.0)
                 # Erel
                 E_sum_i = np.sum(E_i, axis=-1, keepdims=True)
                 E_sum_j = np.sum(E_j, axis=-1, keepdims=True)
                 E_rel_i = E_i / E_sum_i
                 E_rel_j = E_j / E_sum_j
-                E_rel_log_i = np.log(np.abs(E_rel_i))
+                E_rel_log_i = np.where(E_rel_i != 0, np.log(E_rel_i), 0)
                 E_rel_log_i = np.nan_to_num(E_rel_log_i, nan=0.0)
-                E_rel_log_j = np.log(np.abs(E_rel_j))
+                E_rel_log_j = np.where(E_rel_j != 0, np.log(E_rel_j), 0)
                 E_rel_log_j = np.nan_to_num(E_rel_log_j, nan=0.0)
                 # deltaR
                 deltaR_i = np.sqrt(np.square(eta_i) + np.square(phi_i))
