@@ -97,6 +97,10 @@ def load_labels(dataset_path, flag, n_files=-1):
 
 def main(args):
     t0 = time.time()
+    print(f"full_kinematics: {args.full_kinematics}")
+    print(f"raw_3: {args.raw_3}")
+    print(f"use mask: {args.mask}")
+    print(f"use continuous mask: {args.cmask}")
     args.logfile = f"/ssl-jet-vol-v2/JetCLR/logs/zz-simCLR-{args.label}-log.txt"
     args.nconstit = 50
     args.n_heads = 4
