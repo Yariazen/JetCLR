@@ -854,14 +854,12 @@ if __name__ == "__main__":
         "--mask",
         type=bool,
         action="store",
-        default=False,
         help="use mask in transformer",
     )
     parser.add_argument(
         "--cmask",
         type=bool,
         action="store",
-        default=True,
         help="use continuous mask in transformer",
     )
     parser.add_argument(
