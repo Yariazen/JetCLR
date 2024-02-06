@@ -271,9 +271,9 @@ def main(args):
     tr_lab = np.array(tr_lab)
 
     # take out the delta_R feature
-    if args.full_kinematics:
-        tr_dat = tr_dat[:, 0:6, :]
-        val_dat_in = val_dat_in[:, 0:6, :]
+    # if args.full_kinematics:
+    #     tr_dat = tr_dat[:, 0:6, :]
+    #     val_dat_in = val_dat_in[:, 0:6, :]
     # input dim to the transformer -> (pt,eta,phi)
     input_dim = tr_dat.shape[1]
     print(f"input_dim: {input_dim}")
