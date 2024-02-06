@@ -51,13 +51,16 @@ def linear_classifier_test(
     val_fraction=0.1,  # Fraction of training data to use as validation
     n_hidden=0,
     hidden_size=0,
+    logfile=None,
 ):
     # define the global base device
     world_size = torch.cuda.device_count()
     if world_size:
         device = torch.device("cuda:0")
         for i in range(world_size):
-            print(f"Device {i}: {torch.cuda.get_device_name(i)}")
+            print(
+                f"Device {i}: {torch.cuda.get_device_name(i)}", flush=True, file=logfile
+            )
     else:
         device = "cpu"
         print("Device: CPU")
@@ -102,10 +105,12 @@ def linear_classifier_test(
     best_model_state = None  # Placeholder for the best model state
     redo_lct = False
     epoch = 0
+    redo_counter = 0
     while epoch < linear_n_epochs:
-        if redo_lct:
+        if redo_lct and redo_counter < 10:
             # re-initialize the linear classifier
-            print("re-initialized LCT")
+            redo_counter += 1
+            print("re-initialized LCT", flush=True, file=logfile)
             losses, val_losses = [], []
             best_val_loss = float("inf")
             best_model_state = None
