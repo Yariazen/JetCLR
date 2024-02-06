@@ -95,6 +95,109 @@ def load_labels(dataset_path, flag, n_files=-1):
     return data
 
 
+def augmentation(args, x_i):
+    if args.full_kinematics:
+        # x_i has shape (batch_size, 7, n_constit)
+        # dim 1 ordering: 'part_eta','part_phi','part_pt_log', 'part_e_log', 'part_logptrel', 'part_logerel','part_deltaR'
+        # extract the (pT, eta, phi) features for augmentations
+        log_pT = x_i[:, 2, :]
+        pT = np.where(log_pT != 0, np.exp(log_pT), 0)  # this handles zero-padding
+        eta = x_i[:, 0, :]
+        phi = x_i[:, 1, :]
+        x_i = np.stack([pT, eta, phi], 1)  # (batch_size, 3, n_constit)
+    time1 = time.time()
+    x_i = rotate_jets(x_i)
+    x_j = x_i.copy()
+    if args.rot:
+        x_j = rotate_jets(x_j)
+    time2 = time.time()
+    if args.cf:
+        x_j = collinear_fill_jets(x_j)
+        x_j = collinear_fill_jets(x_j)
+    time3 = time.time()
+    if args.ptd:
+        x_j = distort_jets(x_j, strength=args.ptst, pT_clip_min=args.ptcm)
+    time4 = time.time()
+    if args.trs:
+        x_j = translate_jets(x_j, width=args.trsw)
+        x_i = translate_jets(x_i, width=args.trsw)
+    time5 = time.time()
+    if not args.full_kinematics:
+        x_i = rescale_pts(x_i)
+        x_j = rescale_pts(x_j)
+    if args.full_kinematics:
+        # recalculate the rest of the features after augmentation
+        pT_i = x_i[:, 0, :]
+        eta_i = x_i[:, 1, :]
+        phi_i = x_i[:, 2, :]
+        pT_j = x_j[:, 0, :]
+        eta_j = x_j[:, 1, :]
+        phi_j = x_j[:, 2, :]
+        # calculate the rest of the features
+        # pT
+        pT_log_i = np.where(pT_i != 0, np.log(pT_i), 0)
+        pT_log_i = np.nan_to_num(pT_log_i, nan=0.0)
+        pT_log_j = np.where(pT_j != 0, np.log(pT_j), 0)
+        pT_log_j = np.nan_to_num(pT_log_j, nan=0.0)
+        # pTrel
+        pT_sum_i = np.sum(pT_i, axis=-1, keepdims=True)
+        pT_sum_j = np.sum(pT_j, axis=-1, keepdims=True)
+        pt_rel_i = pT_i / pT_sum_i
+        pt_rel_j = pT_j / pT_sum_j
+        pt_rel_log_i = np.where(pt_rel_i != 0, np.log(pt_rel_i), 0)
+        pt_rel_log_i = np.nan_to_num(pt_rel_log_i, nan=0.0)
+        pt_rel_log_j = np.where(pt_rel_j != 0, np.log(pt_rel_j), 0)
+        pt_rel_log_j = np.nan_to_num(pt_rel_log_j, nan=0.0)
+        # E
+        E_i = pT_i * np.cosh(eta_i)
+        E_j = pT_j * np.cosh(eta_j)
+        E_log_i = np.where(E_i != 0, np.log(E_i), 0)
+        E_log_i = np.nan_to_num(E_log_i, nan=0.0)
+        E_log_j = np.where(E_j != 0, np.log(E_j), 0)
+        E_log_j = np.nan_to_num(E_log_j, nan=0.0)
+        # Erel
+        E_sum_i = np.sum(E_i, axis=-1, keepdims=True)
+        E_sum_j = np.sum(E_j, axis=-1, keepdims=True)
+        E_rel_i = E_i / E_sum_i
+        E_rel_j = E_j / E_sum_j
+        E_rel_log_i = np.where(E_rel_i != 0, np.log(E_rel_i), 0)
+        E_rel_log_i = np.nan_to_num(E_rel_log_i, nan=0.0)
+        E_rel_log_j = np.where(E_rel_j != 0, np.log(E_rel_j), 0)
+        E_rel_log_j = np.nan_to_num(E_rel_log_j, nan=0.0)
+        # deltaR
+        deltaR_i = np.sqrt(np.square(eta_i) + np.square(phi_i))
+        deltaR_j = np.sqrt(np.square(eta_j) + np.square(phi_j))
+        # stack them to obtain the final augmented data
+        x_i = np.stack(
+            [
+                eta_i,
+                phi_i,
+                pT_log_i,
+                E_log_i,
+                pt_rel_log_i,
+                E_rel_log_i,
+                deltaR_i,
+            ],
+            1,
+        )  # (batch_size, 7, n_constit)
+        x_j = np.stack(
+            [
+                eta_j,
+                phi_j,
+                pT_log_j,
+                E_log_j,
+                pt_rel_log_j,
+                E_rel_log_j,
+                deltaR_j,
+            ],
+            1,
+        )  # (batch_size, 7, n_constit)
+    x_i = torch.Tensor(x_i).transpose(1, 2).to(args.device)
+    x_j = torch.Tensor(x_j).transpose(1, 2).to(args.device)
+    times = [time1, time2, time3, time4, time5]
+    return x_i, x_j, times
+
+
 def main(args):
     t0 = time.time()
     print(f"full_kinematics: {args.full_kinematics}")
@@ -142,13 +245,15 @@ def main(args):
 
     print("loading data")
     data = load_data("/ssl-jet-vol-v2/toptagging", "train", args.num_files)
+    data_val = load_data("/ssl-jet-vol-v2/toptagging", "val", 1)
     labels = load_labels("/ssl-jet-vol-v2/toptagging", "train", args.num_files)
+    labels_val = load_labels("/ssl-jet-vol-v2/toptagging", "val", 1)
     tr_dat_in = np.concatenate(data, axis=0)  # Concatenate along the first axis
+    val_dat_in = np.concatenate(data_val, axis=0)
+    # reduce validation data
+    val_dat_in = val_dat_in[0:10000]
     tr_lab_in = np.concatenate(labels, axis=0)
-
-    # input dim to the transformer -> (pt,eta,phi)
-    input_dim = tr_dat_in.shape[1]
-    print(input_dim)
+    val_lab_in = np.concatenate(labels_val, axis=0)
 
     # creating the training dataset
     print("shuffling data and doing the S/B split", flush=True, file=logfile)
@@ -164,6 +269,14 @@ def main(args):
     # reducing the training data
     tr_dat = np.array(tr_dat)
     tr_lab = np.array(tr_lab)
+
+    # take out the delta_R feature
+    if args.full_kinematics:
+        tr_dat = tr_dat[:, 0:6, :]
+        val_dat_in = val_dat_in[:, 0:6, :]
+    # input dim to the transformer -> (pt,eta,phi)
+    input_dim = tr_dat.shape[1]
+    print(f"input_dim: {input_dim}")
 
     # create two validation sets:
     # one for training the linear classifier test (LCT)
@@ -186,9 +299,9 @@ def main(args):
     vl_lab_2 = vl_lab[-vl_split_len:]
 
     # cropping all jets to a fixed number of consituents
-    tr_dat = crop_jets(tr_dat, args.nconstit)
-    vl_dat_1 = crop_jets(vl_dat_1, args.nconstit)
-    vl_dat_2 = crop_jets(vl_dat_2, args.nconstit)
+    # tr_dat = crop_jets(tr_dat, args.nconstit)
+    # vl_dat_1 = crop_jets(vl_dat_1, args.nconstit)
+    # vl_dat_2 = crop_jets(vl_dat_2, args.nconstit)
 
     # reducing the validation data for consistency
     val_cut = 50000  # 50k jets
@@ -340,109 +453,9 @@ def main(args):
         for i, indices in enumerate(indices_list):
             net.optimizer.zero_grad()
             x_i = tr_dat[indices, :, :]
-            if args.full_kinematics:
-                # x_i has shape (batch_size, 7, n_constit)
-                # dim 1 ordering: 'part_eta','part_phi','part_pt_log', 'part_e_log', 'part_logptrel', 'part_logerel','part_deltaR'
-                # extract the (pT, eta, phi) features for augmentations
-                log_pT = x_i[:, 2, :]
-                pT = np.where(
-                    log_pT != 0, np.exp(log_pT), 0
-                )  # this handles zero-padding
-                eta = x_i[:, 0, :]
-                phi = x_i[:, 1, :]
-                x_i = np.stack([pT, eta, phi], 1)  # (batch_size, 3, n_constit)
-            time1 = time.time()
-            #             print(x_i.shape)
-            x_i = rotate_jets(x_i)
-            x_j = x_i.copy()
-            if args.rot:
-                x_j = rotate_jets(x_j)
-            time2 = time.time()
-            if args.cf:
-                x_j = collinear_fill_jets(x_j)
-                x_j = collinear_fill_jets(x_j)
-            time3 = time.time()
-            if args.ptd:
-                x_j = distort_jets(x_j, strength=args.ptst, pT_clip_min=args.ptcm)
-            time4 = time.time()
-            if args.trs:
-                x_j = translate_jets(x_j, width=args.trsw)
-                x_i = translate_jets(x_i, width=args.trsw)
-            time5 = time.time()
-            if not args.full_kinematics:
-                x_i = rescale_pts(x_i)
-                x_j = rescale_pts(x_j)
-            if args.full_kinematics:
-                # recalculate the rest of the features after augmentation
-                pT_i = x_i[:, 0, :]
-                eta_i = x_i[:, 1, :]
-                phi_i = x_i[:, 2, :]
-                pT_j = x_j[:, 0, :]
-                eta_j = x_j[:, 1, :]
-                phi_j = x_j[:, 2, :]
-                # calculate the rest of the features
-                # pT
-                pT_log_i = np.where(pT_i != 0, np.log(pT_i), 0)
-                pT_log_i = np.nan_to_num(pT_log_i, nan=0.0)
-                pT_log_j = np.where(pT_j != 0, np.log(pT_j), 0)
-                pT_log_j = np.nan_to_num(pT_log_j, nan=0.0)
-                # pTrel
-                pT_sum_i = np.sum(pT_i, axis=-1, keepdims=True)
-                pT_sum_j = np.sum(pT_j, axis=-1, keepdims=True)
-                pt_rel_i = pT_i / pT_sum_i
-                pt_rel_j = pT_j / pT_sum_j
-                pt_rel_log_i = np.where(pt_rel_i != 0, np.log(pt_rel_i), 0)
-                pt_rel_log_i = np.nan_to_num(pt_rel_log_i, nan=0.0)
-                pt_rel_log_j = np.where(pt_rel_j != 0, np.log(pt_rel_j), 0)
-                pt_rel_log_j = np.nan_to_num(pt_rel_log_j, nan=0.0)
-                # E
-                E_i = pT_i * np.cosh(eta_i)
-                E_j = pT_j * np.cosh(eta_j)
-                E_log_i = np.where(E_i != 0, np.log(E_i), 0)
-                E_log_i = np.nan_to_num(E_log_i, nan=0.0)
-                E_log_j = np.where(E_j != 0, np.log(E_j), 0)
-                E_log_j = np.nan_to_num(E_log_j, nan=0.0)
-                # Erel
-                E_sum_i = np.sum(E_i, axis=-1, keepdims=True)
-                E_sum_j = np.sum(E_j, axis=-1, keepdims=True)
-                E_rel_i = E_i / E_sum_i
-                E_rel_j = E_j / E_sum_j
-                E_rel_log_i = np.where(E_rel_i != 0, np.log(E_rel_i), 0)
-                E_rel_log_i = np.nan_to_num(E_rel_log_i, nan=0.0)
-                E_rel_log_j = np.where(E_rel_j != 0, np.log(E_rel_j), 0)
-                E_rel_log_j = np.nan_to_num(E_rel_log_j, nan=0.0)
-                # deltaR
-                deltaR_i = np.sqrt(np.square(eta_i) + np.square(phi_i))
-                deltaR_j = np.sqrt(np.square(eta_j) + np.square(phi_j))
-                # stack them to obtain the final augmented data
-                x_i = np.stack(
-                    [
-                        eta_i,
-                        phi_i,
-                        pT_log_i,
-                        E_log_i,
-                        pt_rel_log_i,
-                        E_rel_log_i,
-                        deltaR_i,
-                    ],
-                    1,
-                )  # (batch_size, 7, n_constit)
-                x_j = np.stack(
-                    [
-                        eta_j,
-                        phi_j,
-                        pT_log_j,
-                        E_log_j,
-                        pt_rel_log_j,
-                        E_rel_log_j,
-                        deltaR_j,
-                    ],
-                    1,
-                )  # (batch_size, 7, n_constit)
-            x_i = torch.Tensor(x_i).transpose(1, 2).to(device)
-            x_j = torch.Tensor(x_j).transpose(1, 2).to(device)
+            x_i, x_j, times = augmentation(args, x_i)
+            time1, time2, time3, time4, time5 = times
             time6 = time.time()
-            #             print(x_i.shape)
             z_i = net(x_i, use_mask=args.mask, use_continuous_mask=args.cmask)
             z_j = net(x_j, use_mask=args.mask, use_continuous_mask=args.cmask)
             time7 = time.time()
@@ -531,6 +544,18 @@ def main(args):
         if epoch % 10 == 0:
             print(
                 "num threads in use: " + str(torch.get_num_threads()),
+                flush=True,
+                file=logfile,
+            )
+
+        # saving the model
+        if epoch % 10 == 0:
+            print("saving out jetCLR model", flush=True, file=logfile)
+            tms0 = time.time()
+            torch.save(net.state_dict(), expt_dir + "model_ep" + str(epoch) + ".pt")
+            tms1 = time.time()
+            print(
+                f"time taken to save model: {round( tms1-tms0, 1 )}s",
                 flush=True,
                 file=logfile,
             )
@@ -625,18 +650,6 @@ def main(args):
             auc_epochs.append(auc_list)
             imtafe_epochs.append(imtafe_list)
             print("---- --- ----", flush=True, file=logfile)
-
-        # saving the model
-        if epoch % 10 == 0:
-            print("saving out jetCLR model", flush=True, file=logfile)
-            tms0 = time.time()
-            torch.save(net.state_dict(), expt_dir + "model_ep" + str(epoch) + ".pt")
-            tms1 = time.time()
-            print(
-                f"time taken to save model: {round( tms1-tms0, 1 )}s",
-                flush=True,
-                file=logfile,
-            )
 
         # saving out training stats
         if epoch % 10 == 0:
