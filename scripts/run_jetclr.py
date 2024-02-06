@@ -617,6 +617,7 @@ def main(args):
                         np.expand_dims(vl_lab_1, axis=1),
                         vl_reps_2[:, i, :],
                         np.expand_dims(vl_lab_2, axis=1),
+                        logfile=logfile,
                     )
                     auc, imtafe = get_perf_stats(out_lbs_vl, out_dat_vl)
                     auc_list.append(auc)
@@ -734,6 +735,7 @@ def main(args):
             np.expand_dims(vl_lab_1, axis=1),
             vl_reps_2[:, i, :],
             np.expand_dims(vl_lab_2, axis=1),
+            logfile=logfile,
         )
         auc, imtafe = get_perf_stats(out_lbs_f, out_dat_f)
         ep = 0
