@@ -89,10 +89,14 @@ class Transformer(nn.Module):
             pT_zero = x[:, :, 0] == 0
         # (batch_size, n_constit)
         if use_continuous_mask:
-            pT = x[:, :, 0]
             if self.log:
+                log_pT = x[:, :, 2]
                 # exponentiate to get actual pT
-                pT = torch.where(pT != 0, torch.exp(pT), torch.zeros_like(pT))
+                pT = torch.where(
+                    log_pT != 0, torch.exp(log_pT), torch.zeros_like(log_pT)
+                )
+            else:
+                pT = x[:, :, 0]
         if use_mask:
             mask = self.make_mask(pT_zero).to(x.device)
         elif use_continuous_mask:
@@ -205,4 +209,8 @@ class Transformer(nn.Module):
         pT_reshape = torch.repeat_interleave(pT_reshape[:, None], n_constit, axis=1)
         # mask = -1/pT_reshape
         mask = 0.5 * torch.log(pT_reshape)
+        # mask = 0.5 * torch.where(
+        #     pT_reshape != 0, torch.log(pT_reshape), torch.zeros_like(pT_reshape)
+        # )
+
         return mask
