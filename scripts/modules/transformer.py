@@ -77,36 +77,40 @@ class Transformer(nn.Module):
         mult_reps=False,
     ):
         """
-        input here is (batch_size, n_constit, 3)
-        but transformer expects (n_constit, batch_size, 3) so we need to transpose
+        input here is (batch_size, n_constit, 3 or 7)
+        but transformer expects (n_constit, batch_size, 3 or 7) so we need to transpose
         if use_mask is True, will mask out all inputs with pT=0
         """
+        #         print(f"input shape: {inpt.shape}")
         assert not (use_mask and use_continuous_mask)
+        pt_index = 2 if args.full_kinematics else 0
         # make a copy
         x = inpt + 0.0
-        # (batch_size, n_constit)
         if use_mask:
-            pT_zero = x[:, :, 0] == 0
-        # (batch_size, n_constit)
+            pT_zero = x[:, :, pt_index] == 0
         if use_continuous_mask:
             if self.log:
-                log_pT = x[:, :, 2]
+                log_pT = x[:, :, pt_index]
                 # exponentiate to get actual pT
                 pT = torch.where(
                     log_pT != 0, torch.exp(log_pT), torch.zeros_like(log_pT)
                 )
             else:
-                pT = x[:, :, 0]
+                pT = x[:, :, pt_index]
+            print(f"pT: {pT}")
         if use_mask:
             mask = self.make_mask(pT_zero).to(x.device)
         elif use_continuous_mask:
             mask = self.make_continuous_mask(pT).to(x.device)
         else:
             mask = None
+        #         print(f"mask : {mask}")
         x = torch.transpose(x, 0, 1)
         # (n_constit, batch_size, model_dim)
         x = self.embedding(x)
+        #         print(f"after embedding: {x.shape}")
         x = self.transformer(x, mask=mask)
+        #         print(f"after transformer: {x.shape}")
         if use_mask:
             # set masked constituents to zero
             # otherwise the sum will change if the constituents with 0 pT change
@@ -114,10 +118,12 @@ class Transformer(nn.Module):
         elif use_continuous_mask:
             # scale x by pT, so that function is IR safe
             # transpose first to get correct shape
-            x *= torch.transpose(pT, 0, 1)[:, :, None]
+            #             x *= torch.transpose(pT, 0, 1)[:, :, None]
+            pass
         # sum over sequence dim
         # (batch_size, model_dim)
         x = x.sum(0)
+        #         print(f"after summing: {x.shape}")
         return self.head(x, mult_reps)
 
     def head(self, x, mult_reps):
@@ -194,6 +200,7 @@ class Transformer(nn.Module):
         pT_zero = torch.repeat_interleave(pT_zero[:, None], n_constit, axis=1)
         mask = torch.zeros(pT_zero.size(0), n_constit, n_constit)
         mask[pT_zero] = -np.inf
+        #         print(f"mask: {mask}")
         return mask
 
     def make_continuous_mask(self, pT):
@@ -204,13 +211,11 @@ class Transformer(nn.Module):
         intermediate values mean it is partly masked
         This function implements IR safety in the transformer
         """
+        #         print(f"pT : {pT}")
         n_constit = pT.size(1)
         pT_reshape = torch.repeat_interleave(pT, self.n_heads, axis=0)
         pT_reshape = torch.repeat_interleave(pT_reshape[:, None], n_constit, axis=1)
         # mask = -1/pT_reshape
         mask = 0.5 * torch.log(pT_reshape)
-        # mask = 0.5 * torch.where(
-        #     pT_reshape != 0, torch.log(pT_reshape), torch.zeros_like(pT_reshape)
-        # )
-
+        #         print(f"mask: {mask}")
         return mask
