@@ -83,7 +83,7 @@ class Transformer(nn.Module):
         """
         #         print(f"input shape: {inpt.shape}")
         assert not (use_mask and use_continuous_mask)
-        pt_index = 2 if args.full_kinematics else 0
+        pt_index = 2 if self.log else 0
         # make a copy
         x = inpt + 0.0
         if use_mask:
@@ -97,7 +97,7 @@ class Transformer(nn.Module):
                 )
             else:
                 pT = x[:, :, pt_index]
-            print(f"pT: {pT}")
+            # print(f"pT: {pT}")
         if use_mask:
             mask = self.make_mask(pT_zero).to(x.device)
         elif use_continuous_mask:
