@@ -266,9 +266,26 @@ def main(args):
     ldz_tr = list(zip(list_tr_dat, list_tr_lab))
     random.shuffle(ldz_tr)
     tr_dat, tr_lab = zip(*ldz_tr)
-    # reducing the training data
     tr_dat = np.array(tr_dat)
     tr_lab = np.array(tr_lab)
+
+    # do the same with the validation dataset
+    print(
+        "shuffling data and doing the S/B split for the validation dataset",
+        flush=True,
+        file=logfile,
+    )
+    vl_bkg_dat = val_dat_in[val_lab_in == 0].copy()
+    vl_sig_dat = val_dat_in[val_lab_in == 1].copy()
+    nbkg_vl = int(vl_bkg_dat.shape[0])
+    nsig_vl = int(args.sbratio * nbkg_vl)
+    list_vl_dat = list(vl_bkg_dat[0:nbkg_vl]) + list(vl_sig_dat[0:nsig_vl])
+    list_vl_lab = [0 for i in range(nbkg_vl)] + [1 for i in range(nsig_vl)]
+    ldz_vl = list(zip(list_vl_dat, list_vl_lab))
+    random.shuffle(ldz_vl)
+    vl_dat, vl_lab = zip(*ldz_vl)
+    vl_dat = np.array(vl_dat)
+    vl_lab = np.array(vl_lab)
 
     # take out the delta_R feature
     # if args.full_kinematics:
