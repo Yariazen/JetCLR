@@ -254,6 +254,7 @@ def main(args):
     val_dat_in = val_dat_in[0:10000]
     tr_lab_in = np.concatenate(labels, axis=0)
     val_lab_in = np.concatenate(labels_val, axis=0)
+    val_lab_in = val_lab_in[0:10000]
 
     # creating the training dataset
     print("shuffling data and doing the S/B split", flush=True, file=logfile)
