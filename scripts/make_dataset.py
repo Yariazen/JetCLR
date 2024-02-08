@@ -41,7 +41,9 @@ def _clip(a, a_min, a_max):
 
 def build_features_and_labels(tree, transform_features=True):
     # load arrays from the tree
+    # Construct a Lorentz 4-vector from the (px, py, pz, energy) arrays
     a = tree.arrays(filter_name=['part_*', 'jet_pt', 'jet_energy', 'label_*'])
+    p4 = vector.zip({'px': table['part_px'], 'py': table['part_py'], 'pz': table['part_pz'], 'energy': table['part_energy']})
 
     # compute new features
     a['part_mask'] = ak.ones_like(a['part_energy'])
@@ -51,6 +53,8 @@ def build_features_and_labels(tree, transform_features=True):
     a['part_logptrel'] = np.log(a['part_pt']/a['jet_pt'])
     a['part_logerel'] = np.log(a['part_energy']/a['jet_energy'])
     a['part_deltaR'] = np.hypot(a['part_deta'], a['part_dphi'])
+    a['part_eta'] = p4.eta
+    a['part_phi'] = p4.phi
 
     # apply standardization
     if transform_features:
@@ -62,8 +66,8 @@ def build_features_and_labels(tree, transform_features=True):
 
     feature_list = {
         'pf_features': [
-            'part_deta',
-            'part_dphi',
+            'part_eta',
+            'part_phi',
             'part_pt_log', 
             'part_e_log',
             'part_logptrel',

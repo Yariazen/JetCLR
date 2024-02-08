@@ -43,12 +43,12 @@ def main(args):
     label = args.label
     data_dir = f"/ssl-jet-vol-v2/JetClass/processed/{label}"
     data_files = glob.glob(f"{data_dir}/data/*")
-    frac_lst = [50]
+    frac_lst = [1, 5, 10, 50]
     
     for frac in frac_lst:
         print(f"Sampling {frac}% of data from `{label}` directory")
-        processed_data_dir = f"/ssl-jet-vol-v2/JetClass/processed/{label}_{frac}%/data"
-        processed_label_dir = f"/ssl-jet-vol-v2/JetClass/processed/{label}_{frac}%/label"
+        processed_data_dir = f"/ssl-jet-vol-v2/JetClass/processed/raw_{label}_{frac}%/data"
+        processed_label_dir = f"/ssl-jet-vol-v2/JetClass/processed/raw_{label}_{frac}%/label"
         os.system(f"mkdir -p {processed_data_dir} {processed_label_dir}")  # -p: create parent dirs if needed, exist_ok
 
         all_sampled_data = []
@@ -84,8 +84,8 @@ def main(args):
                 sampled_labels_tensor = torch.stack(all_sampled_labels)
                 torch.save(sampled_data_tensor, osp.join(processed_data_dir, f"data{int((i+1) // 100)}.pt"))
                 torch.save(sampled_labels_tensor, osp.join(processed_label_dir, f"labels{int((i+1) // 100)}.pt"))
-                all_sampled_data, all_sampled_labels = [], []
                 del sampled_data_tensor, sampled_labels_tensor
+                all_sampled_data, all_sampled_labels = [], []
                 print(f"--- finished creating {int((i+1) // 100)} files")
 
         # sampled_data_tensor = torch.cat(all_sampled_data, dim=0)
