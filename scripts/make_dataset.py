@@ -43,7 +43,7 @@ def build_features_and_labels(tree, transform_features=True):
     # load arrays from the tree
     # Construct a Lorentz 4-vector from the (px, py, pz, energy) arrays
     a = tree.arrays(filter_name=['part_*', 'jet_pt', 'jet_energy', 'label_*'])
-    p4 = vector.zip({'px': table['part_px'], 'py': table['part_py'], 'pz': table['part_pz'], 'energy': table['part_energy']})
+    p4 = vector.zip({'px': a['part_px'], 'py': a['part_py'], 'pz': a['part_pz'], 'energy': a['part_energy']})
 
     # compute new features
     a['part_mask'] = ak.ones_like(a['part_energy'])
@@ -105,7 +105,7 @@ def main(args):
     data_dir = f"/ssl-jet-vol-v2/JetClass/Pythia/{label}"
     data_files = glob.glob(f"{data_dir}/*")
     label_orig = label.split("_")[0] # without _100M, _5M, _20M
-    processed_dir = f"/ssl-jet-vol-v2/JetClass/processed/{label_orig}"
+    processed_dir = f"/ssl-jet-vol-v2/JetClass/processed/raw/{label_orig}"
     os.system(f"mkdir -p {processed_dir}")  # -p: create parent dirs if needed, exist_ok
 
     for i, file in enumerate(data_files):

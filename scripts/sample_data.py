@@ -47,8 +47,8 @@ def main(args):
     
     for frac in frac_lst:
         print(f"Sampling {frac}% of data from `{label}` directory")
-        processed_data_dir = f"/ssl-jet-vol-v2/JetClass/processed/raw_{label}_{frac}%/data"
-        processed_label_dir = f"/ssl-jet-vol-v2/JetClass/processed/raw_{label}_{frac}%/label"
+        processed_data_dir = f"/ssl-jet-vol-v2/JetClass/processed/raw/raw_{label}_{frac}%/data"
+        processed_label_dir = f"/ssl-jet-vol-v2/JetClass/processed/raw/raw_{label}_{frac}%/label"
         os.system(f"mkdir -p {processed_data_dir} {processed_label_dir}")  # -p: create parent dirs if needed, exist_ok
 
         all_sampled_data = []
