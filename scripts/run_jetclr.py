@@ -540,7 +540,7 @@ def main(args):
                 losses_e_val.append(val_loss.detach().cpu().numpy())
             net.train()
             loss_e_val = np.mean(np.array(losses_e))
-            losses_val.append(loss_e_val.detach().cpu().numpy())
+            losses_val.append(loss_e_val)
 
         print(
             "epoch: "
