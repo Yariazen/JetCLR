@@ -533,7 +533,7 @@ def main(args):
             for i, indices in enumerate(indices_list_val):
                 net.optimizer.zero_grad()
                 y_i = vl_dat[indices, :, :]
-                y_i, y_j, times = augmentation(args, x_i)
+                y_i, y_j, times = augmentation(args, y_i)
                 z_i = net(y_i, use_mask=args.mask, use_continuous_mask=args.cmask)
                 z_j = net(y_j, use_mask=args.mask, use_continuous_mask=args.cmask)
                 val_loss = contrastive_loss(z_i, z_j, args.temperature).to(device)
