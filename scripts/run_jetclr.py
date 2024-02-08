@@ -279,11 +279,11 @@ def main(args):
     vl_sig_dat = val_dat_in[val_lab_in == 1].copy()
     nbkg_vl = int(vl_bkg_dat.shape[0])
     nsig_vl = int(args.sbratio * nbkg_vl)
-    list_vl_dat = list(vl_bkg_dat[0:nbkg_vl]) + list(vl_sig_dat[0:nsig_vl])
-    list_vl_lab = [0 for i in range(nbkg_vl)] + [1 for i in range(nsig_vl)]
-    ldz_vl = list(zip(list_vl_dat, list_vl_lab))
-    random.shuffle(ldz_vl)
-    vl_dat, vl_lab = zip(*ldz_vl)
+    list_test_dat = list(vl_bkg_dat[0:nbkg_vl]) + list(vl_sig_dat[0:nsig_vl])
+    list_test_lab = [0 for i in range(nbkg_vl)] + [1 for i in range(nsig_vl)]
+    ldz_test = list(zip(list_test_dat, list_test_lab))
+    random.shuffle(ldz_test)
+    vl_dat, vl_lab = zip(*ldz_test)
     vl_dat = np.array(vl_dat)
     vl_lab = np.array(vl_lab)
 
@@ -295,52 +295,54 @@ def main(args):
     input_dim = tr_dat.shape[1]
     print(f"input_dim: {input_dim}")
 
-    # create two validation sets:
+    # create two testing sets:
     # one for training the linear classifier test (LCT)
     # and one for testing on it
     # we will do this just with tr_dat_in, but shuffled and split 50/50
     # this should be fine because the jetCLR training doesn't use labels
     # we want the LCT to use S/B=1 all the time
-    list_vl_dat = list(tr_dat_in.copy())
-    list_vl_lab = list(tr_lab_in.copy())
-    ldz_vl = list(zip(list_vl_dat, list_vl_lab))
-    random.shuffle(ldz_vl)
-    vl_dat, vl_lab = zip(*ldz_vl)
-    vl_dat = np.array(vl_dat)
-    vl_lab = np.array(vl_lab)
-    vl_len = vl_dat.shape[0]
-    vl_split_len = int(vl_len / 2)
-    vl_dat_1 = vl_dat[0:vl_split_len]
-    vl_lab_1 = vl_lab[0:vl_split_len]
-    vl_dat_2 = vl_dat[-vl_split_len:]
-    vl_lab_2 = vl_lab[-vl_split_len:]
+    list_test_dat = list(tr_dat_in.copy())
+    list_test_lab = list(tr_lab_in.copy())
+    ldz_test = list(zip(list_test_dat, list_test_lab))
+    random.shuffle(ldz_test)
+    test_dat, test_lab = zip(*ldz_test)
+    test_dat = np.array(test_dat)
+    test_lab = np.array(test_lab)
+    test_len = test_dat.shape[0]
+    test_split_len = int(test_len / 2)
+    test_dat_1 = test_dat[0:test_split_len]
+    test_lab_1 = test_lab[0:test_split_len]
+    test_dat_2 = test_dat[-test_split_len:]
+    test_lab_2 = test_lab[-test_split_len:]
 
     # cropping all jets to a fixed number of consituents
     # tr_dat = crop_jets(tr_dat, args.nconstit)
-    # vl_dat_1 = crop_jets(vl_dat_1, args.nconstit)
-    # vl_dat_2 = crop_jets(vl_dat_2, args.nconstit)
+    # test_dat_1 = crop_jets(test_dat_1, args.nconstit)
+    # test_dat_2 = crop_jets(test_dat_2, args.nconstit)
 
-    # reducing the validation data for consistency
-    val_cut = 50000  # 50k jets
-    vl_dat_1 = vl_dat_1[0:val_cut]
-    vl_lab_1 = vl_lab_1[0:val_cut]
-    vl_dat_2 = vl_dat_2[0:val_cut]
-    vl_lab_2 = vl_lab_2[0:val_cut]
+    # reducing the testing data for consistency
+    test_cut = 50000  # 50k jets
+    test_dat_1 = test_dat_1[0:test_cut]
+    test_lab_1 = test_lab_1[0:test_cut]
+    test_dat_2 = test_dat_2[0:test_cut]
+    test_lab_2 = test_lab_2[0:test_cut]
 
     # print data dimensions
     print("training data shape: " + str(tr_dat.shape), flush=True, file=logfile)
-    print("validation-1 data shape: " + str(vl_dat_1.shape), flush=True, file=logfile)
-    print("validation-2 data shape: " + str(vl_dat_2.shape), flush=True, file=logfile)
+    print("Testing-1 data shape: " + str(test_dat_1.shape), flush=True, file=logfile)
+    print("Testing-2 data shape: " + str(test_dat_2.shape), flush=True, file=logfile)
+    print("validation data shape: " + str(vl_dat.shape), flush=True, file=logfile)
     print("training labels shape: " + str(tr_lab.shape), flush=True, file=logfile)
-    print("validation-1 labels shape: " + str(vl_lab_1.shape), flush=True, file=logfile)
-    print("validation-2 labels shape: " + str(vl_lab_2.shape), flush=True, file=logfile)
+    print("Testing-1 labels shape: " + str(test_lab_1.shape), flush=True, file=logfile)
+    print("Testing-2 labels shape: " + str(test_lab_2.shape), flush=True, file=logfile)
+    print("validation labels shape: " + str(vl_lab.shape), flush=True, file=logfile)
 
     t1 = time.time()
 
     # re-scale test data, for the training data this will be done on the fly due to the augmentations
     if not args.full_kinematics:
-        vl_dat_1 = rescale_pts(vl_dat_1)
-        vl_dat_2 = rescale_pts(vl_dat_2)
+        test_dat_1 = rescale_pts(test_dat_1)
+        test_dat_2 = rescale_pts(test_dat_2)
 
     print(
         "time taken to load and preprocess data: "
@@ -373,11 +375,11 @@ def main(args):
     print("optimiser: " + str(args.opt), flush=True, file=logfile)
     print("mask: " + str(args.mask), flush=True, file=logfile)
     print("continuous mask: " + str(args.cmask), flush=True, file=logfile)
-    print("--- hyper-parameters ---", flush=True, file=logfile)
+    print("\n--- hyper-parameters ---", flush=True, file=logfile)
     print("learning rate: " + str(args.learning_rate), flush=True, file=logfile)
     print("batch size: " + str(args.batch_size), flush=True, file=logfile)
     print("temperature: " + str(args.temperature), flush=True, file=logfile)
-    print("--- symmetries/augmentations ---", flush=True, file=logfile)
+    print("\n--- symmetries/augmentations ---", flush=True, file=logfile)
     print("rotations: " + str(args.rot), flush=True, file=logfile)
     print("low pT smearing: " + str(args.ptd), flush=True, file=logfile)
     print("pT smearing clip parameter: " + str(args.ptcm), flush=True, file=logfile)
@@ -387,10 +389,10 @@ def main(args):
         print("Number of input features per particle: 7", flush=True, file=logfile)
     else:
         print("Number of input features per particle: 3", flush=True, file=logfile)
-    print("---", flush=True, file=logfile)
+    print("---------------", flush=True, file=logfile)
 
     # initialise the network
-    print("initialising the network", flush=True, file=logfile)
+    print("\ninitialising the network", flush=True, file=logfile)
     net = Transformer(
         input_dim,
         args.model_dim,
@@ -427,12 +429,13 @@ def main(args):
         flush=True,
         file=logfile,
     )
-    print("---", flush=True, file=logfile)
+    print("---------------", flush=True, file=logfile)
 
     # initialise lists for storing training stats
     auc_epochs = []
     imtafe_epochs = []
     losses = []
+    losses_val = []
     loss_align_epochs = []
     loss_uniform_epochs = []
 
@@ -446,6 +449,7 @@ def main(args):
     for epoch in range(args.n_epochs):
         # re-batch the data on each epoch
         indices_list = torch.split(torch.randperm(tr_dat.shape[0]), args.batch_size)
+        indices_list_val = torch.split(torch.randperm(vl_dat.shape[0]), args.batch_size)
 
         # initialise timing stats
         te0 = time.time()
@@ -454,6 +458,7 @@ def main(args):
         loss_align_e = []
         loss_uniform_e = []
         losses_e = []
+        losses_e_val = []
 
         # initialise timing stats
         td1 = 0
@@ -519,11 +524,34 @@ def main(args):
 
         te1 = time.time()
 
+        # calculate validation loss at the end of the epoch
+        with torch.no_grad():
+            net.eval()
+
+            # do augmentations on the fly for the validation data
+            for i, indices in enumerate(indices_list_val):
+                net.optimizer.zero_grad()
+                y_i = vl_dat[indices, :, :]
+                y_i, y_j, times = augmentation(args, x_i)
+                z_i = net(y_i, use_mask=args.mask, use_continuous_mask=args.cmask)
+                z_j = net(y_j, use_mask=args.mask, use_continuous_mask=args.cmask)
+                val_loss = contrastive_loss(z_i, z_j, args.temperature).to(device)
+                losses_e_val.append(val_loss.detach().cpu().numpy())
+            net.train()
+            loss_e_val = np.mean(np.array(losses_e))
+            losses_val.append(loss_e_val.detach().cpu().numpy())
+
         print(
-            "epoch: " + str(epoch) + ", loss: " + str(round(losses[-1], 5)),
+            "epoch: "
+            + str(epoch)
+            + ", loss: "
+            + str(round(losses[-1], 5))
+            + ", val loss: "
+            + str(round(losses_val[-1], 5)),
             flush=True,
             file=logfile,
         )
+
         if args.opt == "sgdca" or args.opt == "sgdslr":
             print("lr: " + str(scheduler._last_lr), flush=True, file=logfile)
         print(
@@ -581,16 +609,16 @@ def main(args):
         if epoch % 10 == 0:
             print("--- LCT ----", flush=True, file=logfile)
             # if args.trs:
-            #     vl_dat_1 = translate_jets( vl_dat_1, width=args.trsw )
-            #     vl_dat_2 = translate_jets( vl_dat_2, width=args.trsw )
+            #     test_dat_1 = translate_jets( test_dat_1, width=args.trsw )
+            #     test_dat_2 = translate_jets( test_dat_2, width=args.trsw )
             # get the validation reps
             with torch.no_grad():
                 net.eval()
-                # vl_reps_1 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
-                # vl_reps_2 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
+                # vl_reps_1 = F.normalize( net.forward_batchwise( torch.Tensor( test_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
+                # vl_reps_2 = F.normalize( net.forward_batchwise( torch.Tensor( test_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
                 vl_reps_1 = (
                     net.forward_batchwise(
-                        torch.Tensor(vl_dat_1).transpose(1, 2),
+                        torch.Tensor(test_dat_1).transpose(1, 2),
                         args.batch_size,
                         use_mask=args.mask,
                         use_continuous_mask=args.cmask,
@@ -601,7 +629,7 @@ def main(args):
                 )
                 vl_reps_2 = (
                     net.forward_batchwise(
-                        torch.Tensor(vl_dat_2).transpose(1, 2),
+                        torch.Tensor(test_dat_2).transpose(1, 2),
                         args.batch_size,
                         use_mask=args.mask,
                         use_continuous_mask=args.cmask,
@@ -623,7 +651,7 @@ def main(args):
                         out_dat_vl,
                         out_lbs_vl,
                         losses_vl,
-                        val_losses,
+                        _,
                     ) = linear_classifier_test(
                         linear_input_size,
                         linear_batch_size,
@@ -631,9 +659,9 @@ def main(args):
                         "adam",
                         linear_learning_rate,
                         vl_reps_1[:, i, :],
-                        np.expand_dims(vl_lab_1, axis=1),
+                        np.expand_dims(test_lab_1, axis=1),
                         vl_reps_2[:, i, :],
-                        np.expand_dims(vl_lab_2, axis=1),
+                        np.expand_dims(test_lab_2, axis=1),
                         logfile=logfile,
                     )
                     auc, imtafe = get_perf_stats(out_lbs_vl, out_dat_vl)
@@ -709,15 +737,15 @@ def main(args):
 
     # evaluate the network on the testing data, applying some augmentations first if it's required
     # if args.trs:
-    #     vl_dat_1 = translate_jets( vl_dat_1, width=args.trsw )
-    #     vl_dat_2 = translate_jets( vl_dat_2, width=args.trsw )
+    #     test_dat_1 = translate_jets( test_dat_1, width=args.trsw )
+    #     test_dat_2 = translate_jets( test_dat_2, width=args.trsw )
     with torch.no_grad():
         net.eval()
-        # vl_reps_1 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
-        # vl_reps_2 = F.normalize( net.forward_batchwise( torch.Tensor( vl_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
+        # vl_reps_1 = F.normalize( net.forward_batchwise( torch.Tensor( test_dat_1 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
+        # vl_reps_2 = F.normalize( net.forward_batchwise( torch.Tensor( test_dat_2 ).transpose(1,2), args.batch_size, use_mask=args.mask, use_continuous_mask=args.cmask ).detach().cpu(), dim=-1 ).numpy()
         vl_reps_1 = (
             net.forward_batchwise(
-                torch.Tensor(vl_dat_1).transpose(1, 2),
+                torch.Tensor(test_dat_1).transpose(1, 2),
                 args.batch_size,
                 use_mask=args.mask,
                 use_continuous_mask=args.cmask,
@@ -728,7 +756,7 @@ def main(args):
         )
         vl_reps_2 = (
             net.forward_batchwise(
-                torch.Tensor(vl_dat_2).transpose(1, 2),
+                torch.Tensor(test_dat_2).transpose(1, 2),
                 args.batch_size,
                 use_mask=args.mask,
                 use_continuous_mask=args.cmask,
@@ -749,9 +777,9 @@ def main(args):
             "adam",
             linear_learning_rate,
             vl_reps_1[:, i, :],
-            np.expand_dims(vl_lab_1, axis=1),
+            np.expand_dims(test_lab_1, axis=1),
             vl_reps_2[:, i, :],
-            np.expand_dims(vl_lab_2, axis=1),
+            np.expand_dims(test_lab_2, axis=1),
             logfile=logfile,
         )
         auc, imtafe = get_perf_stats(out_lbs_f, out_dat_f)
