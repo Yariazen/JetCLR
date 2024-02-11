@@ -184,3 +184,53 @@ def linear_classifier_test(
     )
     out_lbs = telab_in
     return out_dat, out_lbs, losses, val_losses  # Return the validation losses as well
+
+def binary_linear_classifier_test(
+    linear_input_size,
+    linear_batch_size,
+    linear_n_epochs,
+    linear_opt,
+    linear_learning_rate,
+    reps_tr_in,
+    trlab_in,
+    reps_te_in,
+    telab_in,
+    desired_label,
+    val_fraction=0.1,  # Fraction of training data to use as validation
+    n_hidden=0,
+    hidden_size=0,
+    logfile=None,
+): 
+    labels = [
+        'QCD',
+        'Hbb',
+        'Hgg',
+        'H4q',
+        'Hqql',
+        'Zqq',
+        'Wqq',
+        'Tbqq',
+        'Tbl'
+    ]
+    desired_label = labels.index(desired_label)
+    indices_to_modify = [i for i in range(trlab_in.shape[1]) if i != desired_label]
+    trlab_in_bin = trlab_in.copy()
+    trlab_in_bin[:, indices_to_modify] = 0
+    telab_in_bin = telab_in.copy()
+    telab_in_bin[:, indices_to_modify] = 0
+
+    return linear_classifier_test(
+        linear_input_size,
+        linear_batch_size,
+        linear_n_epochs,
+        linear_opt,
+        linear_learning_rate,
+        reps_tr_in,
+        trlab_in_bin,
+        reps_te_in,
+        telab_in_bin,
+        val_fraction=val_fraction,
+        n_hidden=n_hidden,
+        hidden_size=hidden_size,
+        logfile=logfile,
+    )
