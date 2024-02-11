@@ -212,8 +212,7 @@ def binary_linear_classifier_test(
         'Tbqq',
         'Tbl'
     ]
-    desired_label = labels.index(desired_label)
-    indices_to_modify = [i for i in range(trlab_in.shape[1]) if i != desired_label]
+    indices_to_modify = [i for i, label in enumerate(labels) if label != desired_label]
     trlab_in_bin = trlab_in.copy()
     trlab_in_bin[:, indices_to_modify] = 0
     telab_in_bin = telab_in.copy()
