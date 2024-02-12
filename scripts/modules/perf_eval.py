@@ -213,10 +213,16 @@ def binary_linear_classifier_test(
         'Tbl'
     ]
     indices_to_modify = [i for i, label in enumerate(labels) if label != desired_label]
-    trlab_in_bin = trlab_in.copy()
+    
+    trlab_in_bin = trlab_in.clone()
     trlab_in_bin[:, indices_to_modify] = 0
-    telab_in_bin = telab_in.copy()
+    trlab_in_max_indices = torch.argmax(trlab_in_bin, dim=1)
+    trlab_in_collapsed = trlab_in_bin[torch.arange(trlab_in_bin.shape[0]), trlab_in_max_indices]
+
+    telab_in_bin = telab_in.clone()
     telab_in_bin[:, indices_to_modify] = 0
+    telab_in_max_indices = torch.argmax(telab_in_bin, dim=1)
+    telab_in_collapsed = telab_in_bin[torch.arange(telab_in_bin.shape[0]), telab_in_max_indices]
 
     return linear_classifier_test(
         linear_input_size,
@@ -225,9 +231,9 @@ def binary_linear_classifier_test(
         linear_opt,
         linear_learning_rate,
         reps_tr_in,
-        trlab_in_bin,
+        trlab_in_collapsed,
         reps_te_in,
-        telab_in_bin,
+        telab_in_collapsed,
         val_fraction=val_fraction,
         n_hidden=n_hidden,
         hidden_size=hidden_size,
